@@ -94,6 +94,14 @@
             box-shadow: 0 0 10px rgba(255, 0, 119, 0.3);
         }
 
+        .map-nav-container {
+            opacity: 1;
+            transition: opacity 1s ease-in-out;
+        }
+        .map-nav-container.nav-fading {
+            opacity: 0;
+            pointer-events: none;
+        }
         .nav-btn {
             background: rgba(20, 10, 25, 0.95);
             font-family: 'Helvetica Neue', Arial, sans-serif;
@@ -105,14 +113,21 @@
             transition: all 0.2s ease;
         }
 
-        .btn-sukhumvit, .btn-huaikhwang {
+        .btn-sukhumvit, .btn-huaikhwang, .btn-bangkok, .btn-pattaya, .btn-phuket, .btn-back {
             border: 2px solid #00ffff;
             color: #00ffff;
             box-shadow: 0 0 5px rgba(0, 255, 255, 0.2);
         }
-        .btn-sukhumvit:hover, .btn-huaikhwang:hover {
+        .btn-sukhumvit:hover, .btn-huaikhwang:hover, .btn-bangkok:hover, .btn-pattaya:hover, .btn-phuket:hover, .btn-back:hover {
             background: #00ffff;
             color: #000;
+        }
+        .btn-back {
+            min-width: 34px;
+            padding-left: 10px;
+            padding-right: 10px;
+            font-size: 16px;
+            line-height: 1;
         }
 
         .btn-patpong {
@@ -123,6 +138,59 @@
         .btn-patpong:hover {
             background: #ff33aa;
             color: #000;
+        }
+
+
+        /* Business category filters: vertical panel on the left side of the map */
+        .map-filter-container {
+            position: absolute;
+            top: 50%;
+            left: 10px;
+            transform: translateY(-50%);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 7px;
+            width: 218px;
+            max-width: min(218px, calc(100% - 24px));
+            max-height: calc(100% - 92px);
+            overflow-y: auto;
+            background: rgba(15, 5, 35, 0.92);
+            padding: 8px;
+            border-radius: 6px;
+            border: 1px solid #00ffff;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.2);
+        }
+        .filter-btn {
+            background: rgba(20, 10, 25, 0.95);
+            border: 1px solid #777;
+            color: #eee;
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            font-weight: bold;
+            padding: 7px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: opacity 0.2s, background 0.2s, color 0.2s;
+        }
+        /* Business markers fade smoothly when category filters change. */
+        .leaflet-marker-icon,
+        .leaflet-marker-shadow {
+            transition: opacity 1s ease-in-out !important;
+        }
+
+        .filter-btn.active {
+            background: #00ffff;
+            border-color: #00ffff;
+            color: #000;
+            box-shadow: 0 0 8px rgba(0,255,255,0.5);
+        }
+        @media (max-width: 600px) {
+            .map-nav-container { left: 8px; top: 8px; gap: 4px; }
+            .map-nav-container .nav-btn { padding: 5px 7px; font-size: 10px; }
+            .map-filter-container { left: 8px; top: 50%; transform: translateY(-50%); width: 174px; max-width: calc(100% - 20px); max-height: calc(100% - 24px); gap: 5px; padding: 6px; }
+            .filter-btn { padding: 7px 6px; font-size: 10px; text-align: left; }
         }
 
         /* Structural fix for custom Leaflet markers to prevent clipping */
@@ -332,23 +400,178 @@ L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/dark_nolabels/{z}/{x}
         // ==========================================================================
         const navControlDiv = document.createElement('div');
         navControlDiv.className = 'map-nav-container';
-        navControlDiv.innerHTML = `
-            <button id="nav-sukhumvit" class="nav-btn btn-sukhumvit">📍 Sukhumvit</button>
-            <button id="nav-patpong" class="nav-btn btn-patpong">📍 Patpong</button>
-            <button id="nav-huaikhwang" class="nav-btn btn-huaikhwang">📍 Huai Khwang</button>
-        `;
         mapContainer.appendChild(navControlDiv);
 
-        document.getElementById('nav-sukhumvit').addEventListener('click', function() {
-            map.flyTo([13.733589, 100.565204], 15, { duration: 1.5 });
-        });
+        // Location menu with city, Bangkok district, and Pattaya area levels. Controls crossfade in place.
+        let navLevel = 'cities';
+        let navTransitioning = false;
+        const navFadeDuration = 1000; // 1s out + 1s in = 2s total
 
-        document.getElementById('nav-patpong').addEventListener('click', function() {
-            map.flyTo([13.7284, 100.5280], 15, { duration: 1.5 });
-        });
+        function renderLocationButtons(level) {
+            navLevel = level;
+            if (level === 'cities') {
+                navControlDiv.innerHTML = `
+                    <button id="nav-bangkok" class="nav-btn btn-bangkok">📍 Bangkok</button>
+                    <button id="nav-pattaya" class="nav-btn btn-pattaya">📍 Pattaya</button>
+                    <button id="nav-phuket" class="nav-btn btn-phuket">📍 Phuket</button>
+                `;
+                document.getElementById('nav-bangkok').addEventListener('click', function() {
+                    changeLocationMenu('districts');
+                    map.flyTo([13.733589, 100.565204], 12, { duration: 1.5 });
+                });
+                document.getElementById('nav-pattaya').addEventListener('click', function() {
+                    changeLocationMenu('pattaya');
+                    map.flyTo([12.9236, 100.8825], 13, { duration: 1.5 });
+                });
+                document.getElementById('nav-phuket').addEventListener('click', function() {
+                    map.flyTo([7.8804, 98.3923], 12, { duration: 1.5 });
+                });
+            } else if (level === 'pattaya') {
+                navControlDiv.innerHTML = `
+                    <button id="nav-walking-street" class="nav-btn btn-patpong">📍 Walking Street</button>
+                    <button id="nav-buakhao" class="nav-btn btn-sukhumvit">📍 Soi Buakhao</button>
+                    <button id="nav-soi6" class="nav-btn btn-huaikhwang">📍 Soi 6</button>
+                    <button id="nav-back" class="nav-btn btn-back" aria-label="Back to city selection" title="Back to cities">▲</button>
+                `;
+                document.getElementById('nav-walking-street').addEventListener('click', function() {
+                    map.flyTo([12.92545, 100.871225], 16, { duration: 1.5 });
+                });
+                document.getElementById('nav-buakhao').addEventListener('click', function() {
+                    map.flyTo([12.9289, 100.8849], 16, { duration: 1.5 });
+                });
+                document.getElementById('nav-soi6').addEventListener('click', function() {
+                    map.flyTo([12.9492, 100.8872], 16, { duration: 1.5 });
+                });
+                document.getElementById('nav-back').addEventListener('click', function() {
+                    changeLocationMenu('cities');
+                });
+            } else {
+                navControlDiv.innerHTML = `
+                    <button id="nav-sukhumvit" class="nav-btn btn-sukhumvit">📍 Sukhumvit</button>
+                    <button id="nav-patpong" class="nav-btn btn-patpong">📍 Patpong</button>
+                    <button id="nav-huaikhwang" class="nav-btn btn-huaikhwang">📍 Huai Khwang</button>
+                    <button id="nav-back" class="nav-btn btn-back" aria-label="Back to city selection" title="Back to cities">▲</button>
+                `;
+                document.getElementById('nav-sukhumvit').addEventListener('click', function() {
+                    map.flyTo([13.733589, 100.565204], 15, { duration: 1.5 });
+                });
+                document.getElementById('nav-patpong').addEventListener('click', function() {
+                    map.flyTo([13.7284, 100.5280], 15, { duration: 1.5 });
+                });
+                document.getElementById('nav-huaikhwang').addEventListener('click', function() {
+                    map.flyTo([13.7766, 100.5744], 14, { duration: 1.5 });
+                });
+                document.getElementById('nav-back').addEventListener('click', function() {
+                    changeLocationMenu('cities');
+                });
+            }
+        }
 
-        document.getElementById('nav-huaikhwang').addEventListener('click', function() {
-            map.flyTo([13.7766, 100.5744], 14, { duration: 1.5 });
+        function changeLocationMenu(nextLevel) {
+            if (navTransitioning || nextLevel === navLevel) return;
+            navTransitioning = true;
+            navControlDiv.classList.add('nav-fading');
+            window.setTimeout(function() {
+                renderLocationButtons(nextLevel);
+                // Force the browser to apply the faded state before fading the new buttons in.
+                void navControlDiv.offsetWidth;
+                navControlDiv.classList.remove('nav-fading');
+                window.setTimeout(function() { navTransitioning = false; }, navFadeDuration);
+            }, navFadeDuration);
+        }
+
+        renderLocationButtons('cities');
+
+        // ==========================================================================
+        // BUSINESS CATEGORY FILTERS
+        // ==========================================================================
+        const filterControlDiv = document.createElement('div');
+        filterControlDiv.className = 'map-filter-container';
+        filterControlDiv.innerHTML = `
+            <button class="filter-btn active" data-filter="all">All Businesses</button>
+            <button class="filter-btn" data-filter="massage">Massage &amp; Men's Esthe</button>
+            <button class="filter-btn" data-filter="short-time-pink">Short-time Bars &amp; Pink Salons</button>
+            <button class="filter-btn" data-filter="agogo">Agogo &amp; Beer Bars</button>
+            <button class="filter-btn" data-filter="karaoke-gclubs">Karaoke &amp; G-Clubs</button>
+            <button class="filter-btn" data-filter="beer-live-music">Beer &amp; Live Music Bars</button>
+        `;
+        mapContainer.appendChild(filterControlDiv);
+
+        let activeBusinessFilter = 'all';
+
+        function getBusinessFilterCategory(loc) {
+            // An explicit filterCategory on a location always takes priority.
+            if (loc.filterCategory) {
+                const explicit = loc.filterCategory.toLowerCase();
+                if (explicit === 'karaoke' || explicit === 'gentlemens-clubs' || explicit === 'g-clubs') return 'karaoke-gclubs';
+                return explicit;
+            }
+            const categoryText = (loc.category || '').toLowerCase();
+            const businessText = ((loc.name || '') + ' ' + (loc.text || '')).toLowerCase();
+            const allText = categoryText + ' ' + businessText;
+
+            // Check specific venue types before broader categories to avoid false matches.
+            if (/short[ -]?time|pink salon|pink salons/.test(allText)) return 'short-time-pink';
+            if (/a[ -]?go[ -]?go|agogo|gogo bar|go-go bar/.test(allText)) return 'agogo';
+            if (/karaoke|gentlemen.?s club|gentleman.?s club|men.?s club|g[ -]?clubs?/.test(allText)) return 'karaoke-gclubs';
+            if (/beer|live music|brewery|taproom/.test(allText)) return 'beer-live-music';
+            if (/wellness|massage|men.?s esthe|esthe|spa/.test(allText)) return 'massage';
+            return 'other';
+        }
+
+        function applyBusinessFilter(filter) {
+            activeBusinessFilter = filter;
+            const fadeDuration = 1000;
+
+            locations.forEach(loc => {
+                const marker = loc.marker;
+                if (!marker) return;
+                const matches = filter === 'all' || getBusinessFilterCategory(loc) === filter;
+
+                // Cancel any pending removal if the user changes filters again quickly.
+                if (loc._filterFadeTimer) {
+                    clearTimeout(loc._filterFadeTimer);
+                    loc._filterFadeTimer = null;
+                }
+
+                const icon = marker.getElement ? marker.getElement() : marker._icon;
+                if (matches) {
+                    if (!map.hasLayer(marker)) {
+                        // Add it hidden, then let the browser animate it to full opacity.
+                        marker.setOpacity(0);
+                        marker.addTo(map);
+                        requestAnimationFrame(() => {
+                            requestAnimationFrame(() => {
+                                if (map.hasLayer(marker)) marker.setOpacity(1);
+                            });
+                        });
+                    } else {
+                        marker.setOpacity(1);
+                    }
+                } else if (map.hasLayer(marker)) {
+                    marker.setOpacity(0);
+                    loc._filterFadeTimer = setTimeout(() => {
+                        const stillMatches = activeBusinessFilter === 'all' ||
+                            getBusinessFilterCategory(loc) === activeBusinessFilter;
+                        if (!stillMatches && map.hasLayer(marker)) {
+                            map.removeLayer(marker);
+                        }
+                        loc._filterFadeTimer = null;
+                    }, fadeDuration);
+                }
+            });
+
+            filterControlDiv.querySelectorAll('.filter-btn').forEach(button => {
+                const isActive = button.dataset.filter === filter;
+                button.classList.toggle('active', isActive);
+                button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+            });
+        }
+
+        filterControlDiv.querySelectorAll('.filter-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                applyBusinessFilter(this.dataset.filter);
+            });
         });
 
         // ==========================================================================
@@ -490,6 +713,209 @@ L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/dark_nolabels/{z}/{x}
             }
         });
 
+         // ==========================================================================
+        // MINOR ROAD: Sukhumvit Soi 37
+        // ==========================================================================
+        const SukhumvitSoi37Path = [
+            [13.730090, 100.570225], // Left number less is longer South and right number less is longer West // 
+            [13.730656, 100.570365],
+        ];
+
+        const SukhumvitSoi37 = L.polyline(SukhumvitSoi37Path, {
+            color: '#aaaaaa',
+            weight: 4,
+            opacity: 0.75,
+            lineCap: 'round',
+            lineJoin: 'round',
+            interactive: false
+        }).addTo(map);
+
+        SukhumvitSoi37.setText("Sukhumvit Soi 37", {
+            center: true,
+            offset: -6,
+            attributes: {
+                'fill': '#ffffff',
+                'font-weight': '500',
+                'font-size': '10px',
+                'font-family': 'Helvetica Neue, Arial, sans-serif',
+                'letter-spacing': '0.5px'
+            }
+        });
+        
+        // ==========================================================================
+        // MINOR ROAD: SOI 22
+        // ==========================================================================
+        const soi22Path = [
+            [13.733623, 100.565175],
+            [13.732573, 100.565129],
+            [13.731995, 100.565099],
+            [13.730703, 100.565123],
+            [13.726235, 100.565113],
+            [13.724860, 100.564873],  
+            [13.723766, 100.564787]  
+        ];
+
+        const lineSoi22 = L.polyline(soi22Path, {
+            color: '#aaaaaa',
+            weight: 4,
+            opacity: 0.75,
+            lineCap: 'round',
+            lineJoin: 'round',
+            interactive: false
+        }).addTo(map);
+
+        lineSoi22.setText("Sukhumvit Soi 22", {
+            center: true,
+            offset: -6,
+            attributes: {
+                'fill': '#ffffff',
+                'font-weight': '500',
+                'font-size': '10px',
+                'font-family': 'Helvetica Neue, Arial, sans-serif',
+                'letter-spacing': '0.5px'
+            }
+        });
+
+        // ==========================================================================
+        // MINOR ROAD 1: SOI 23 (Text on middle portion only)
+        // ==========================================================================
+        const soi23Path = [
+            [13.735498, 100.562582],
+            [13.738379, 100.563009],
+            [13.738116, 100.565198],
+            [13.740185, 100.565636] 
+        ];
+
+        const lineSoi23 = L.polyline(soi23Path, {
+            color: '#aaaaaa',
+            weight: 4,
+            opacity: 0.75,
+            lineCap: 'round',
+            lineJoin: 'round',
+            interactive: false
+        }).addTo(map);
+
+        const textPathSoi23 = L.polyline([soi23Path[1], soi23Path[2]], {
+            opacity: 0
+        }).addTo(map);
+
+        textPathSoi23.setText("Prasan Mit Alley", {
+            center: true,
+            offset: -6,
+            attributes: {
+                'fill': '#ffffff',
+                'font-weight': '500',
+                'font-size': '10px',
+                'font-family': 'Helvetica Neue, Arial, sans-serif',
+                'letter-spacing': '0.5px'
+            }
+        });
+
+        // ==========================================================================
+        // MINOR ROAD 1: SOI 31 (Text on middle portion only)
+        // ==========================================================================
+        const soi31Path = [
+            [13.733045, 100.566015],
+            [13.733139, 100.566065],
+            [13.736677, 100.566854],
+            [13.737693, 100.566994],
+            [13.737805, 100.566366], 
+            [13.738185, 100.566441] 
+        ];
+
+        const lineSoi31 = L.polyline(soi31Path, {
+            color: '#aaaaaa',
+            weight: 4,
+            opacity: 0.75,
+            lineCap: 'round',
+            lineJoin: 'round',
+            interactive: false
+        }).addTo(map);
+
+        const textPathSoi31 = L.polyline([soi31Path[1], soi31Path[2]], {
+            opacity: 0
+        }).addTo(map);
+
+        textPathSoi31.setText("Sukhumvit Soi 31", {
+            center: true,
+            offset: -6,
+            attributes: {
+                'fill': '#ffffff',
+                'font-weight': '500',
+                'font-size': '10px',
+                'font-family': 'Helvetica Neue, Arial, sans-serif',
+                'letter-spacing': '0.5px'
+            }
+        });
+
+        // ==========================================================================
+        // MINOR ROAD 2: SOI 33
+        // ==========================================================================
+        const soi33Path = [
+             [13.732344, 100.567046],
+             [13.732463, 100.567125],
+             [13.735301, 100.567730]
+        ];
+
+        const lineSoi33 = L.polyline(soi33Path, {
+            color: '#aaaaaa',
+            weight: 4,
+            opacity: 0.75,
+            lineCap: 'round',
+            lineJoin: 'round',
+            interactive: false
+        }).addTo(map);
+
+        lineSoi33.setText("Sukhumvit Soi 33", {
+            center: true,
+            offset: -6,
+            attributes: {
+                'fill': '#ffffff',
+                'font-weight': '500',
+                'font-size': '10px',
+                'font-family': 'Helvetica Neue, Arial, sans-serif',
+                'letter-spacing': '0.5px'
+            }
+        });
+
+        // ==========================================================================
+        // SMALL ACCESS ROADS
+        // ==========================================================================
+        const minorAccessRoads = [
+            {
+                name: "Path to A5 Massage",
+                path: [[13.729877, 100.565120], [13.729879, 100.565360]],
+                color: "#ff33aa", 
+                weight: 3,
+                dashArray: '5, 5'
+            },
+            {
+                name: "Path to Hakumi",
+                path: [[13.733181, 100.567313], [13.733000, 100.568114]],
+                color: "#ff33aa", 
+                weight: 3,
+                dashArray: '5, 5'
+            },
+            {
+                name: "Path to Anela",
+                path: [[13.732770, 100.565136], [13.732774, 100.564840]],
+                color: "#ff33aa", 
+                weight: 3,
+                dashArray: '5, 5'
+            }
+        ];
+
+        minorAccessRoads.forEach(road => {
+            L.polyline(road.path, {
+                color: road.color,
+                weight: road.weight,
+                opacity: 0.9,
+                dashArray: road.dashArray,
+                lineCap: 'round',
+                interactive: false
+            }).addTo(map);
+        });
+
         // ==========================================================================
         // MARKER DEFINITIONS & LOCATIONS
         // ==========================================================================
@@ -511,30 +937,47 @@ L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/dark_nolabels/{z}/{x}
         }
 
         const locations = [
+            {
+                lat: 13.7528, lng: 100.5672,
+                name: "Fortune Tap",
+                category: "Beer & Live Music",
+                filterCategory: "beer-live-music",
+                text: "Fortune Tap Craft beer & Restaurant. Address: 1997/1 New Petchaburi Road, Bang Kapi, Huai Khwang, Bangkok 10310.",
+                google: "https://www.google.com/maps/search/?api=1&query=Fortune+Tap+Craft+beer+1997%2F1+New+Petchaburi+Road+Bangkok",
+                icon: createBrandIcon('🍺 Fortune Tap')
+            },
+            {
+                lat: 12.9368, lng: 100.8872,
+                name: "Aries",
+                category: "Massage & Men's Esthe",
+                filterCategory: "massage",
+                text: "Aries Massage Pattaya. Address: 395/13 Pattaya 3rd Road, Muang Pattaya, Bang Lamung, Chon Buri 20150.",
+                google: "https://www.google.com/maps/search/?api=1&query=Aries+Massage+Pattaya+395%2F13+Pattaya+3rd+Road",
+                icon: createBrandIcon('💆 Aries')
+            },
             { lat: 13.7371, lng: 100.5621, name: "Soi Cowboy", category: "🔴 Red Light District", text: "Famous neon-lit street known for go-go bars and nightlife.", google: "https://www.google.com/maps/search/?api=1&query=13.7371,100.5621", icon: neonPin },
             { lat: 13.7415, lng: 100.5533, name: "Nana Plaza", category: "🔴 Red Light District", text: "Three-story complex famous for bars and entertainment.", google: "https://www.google.com/maps/search/?api=1&query=13.7415,100.5533", icon: neonPin },
             { lat: 13.7284, lng: 100.5280, name: "Patpong", category: "🔴 Red Light District", text: "Historic red-light area with night market.", google: "https://www.google.com/maps/search/?api=1&query=13.7284,100.5280", icon: neonPin },
             {
-                lat: 13.747507, 
-                lng: 100.573025,
-                name: "Fortune tap Craft beer & Restaurant",
-                category: "Craft Beer, Draft Beer, Live Music & Food",
-                icon: createBrandIcon('⭐ Fortune Tap'),          
+                lat: 13.739889,
+                lng: 100.565639,
+                name: "KoKoRo Massage Bangkok",
+                category: "💆💆‍♂️ Elite Relaxation & Wellness",
+                icon: createBrandIcon('⭐ KoKoRo'),          
                 isCustomPanel: true,
                 htmlContent: `
                     <iframe 
                         style="width: 100%; aspect-ratio: 16 / 9; border: none;"
-                        src="https://www.youtube.com/shorts/TtZYaR0aIpk" 
+                        src="https://rumble.com/embed/v7an41y/?pub=1g96ic" 
                         title="YouTube video player" 
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
                         allowfullscreen>
                     </iframe>
-                    <h3 style="color:#ffffff; margin-top:10px; margin-bottom: 5px;">Fortune tap Craft beer & Restaurant</h3>
-                    <p style="color:#ffffff; font-size:1.00em; margin-bottom: 20px;">Craft & Draft Beer, Live Music & Food</p>
+                    <h3 style="color:#ffffff; margin-top:10px; margin-bottom: 5px;">KoKoRo Massage Bangkok</h3>
+                    <p style="color:#ffffff; font-size:1.00em; margin-bottom: 20px;">Cosplay, BDSM and themed room nuru massage</p>
 
                     <h3 style="color: #ffffff; margin-bottom: 5px;">Overview</h3>
-                    <span class="hopping-news-small" style="color: #ffffff; margin-bottom: 20px; display: block;">Choop maak maak. Great place for everything. Hungry? Eat Mukata (thai bbq) good price good quality. Thirsty? Enjoy hughe varity of local and international beers! Ure not sure which one? Feel free to ask and try them first! Live music, pool table... and most importantly lovely service minded staff!
-Highly recommented!</span>
+                    <span class="hopping-news-small" style="color: #ffffff; margin-bottom: 20px; display: block;">With a focus on fun and cosplay fantasy sessions, KoKoRo Massage delivers unforgettable experiences not found at most other Bangkok massage parlors. At Kokoro guests are able to live out their deepest life-long fantasies.</span>
 
                     <div style="margin-top: 30px; border-top: 1px solid #333; margin-bottom: 30px;"></div>
 
@@ -582,6 +1025,343 @@ Highly recommented!</span>
                     </div>
              `
                     },
+
+            { 
+            lat: 13.7306089, 
+            lng: 100.570302,  
+            name: "Stocking Massage", 
+            category: "💆💆‍♂️ Elite Relaxation & Wellness", 
+            icon: createBrandIcon('Stocking Massage'), 
+            isCustomPanel: true,
+            htmlContent: `
+                    <iframe 
+                        style="width: 100%; aspect-ratio: 16 / 9; border: none;"
+                        src="https://www.youtube.com/embed/_-9FAslUCH4?si=69hOTN9Hw4M6Q0t8" 
+                        title="YouTube video player" 
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                        allowfullscreen>
+                    </iframe>
+                    <h3 style="color:#ffffff; margin-top:10px; margin-bottom: -10px;">Stocking Massage</h3>
+                    <p style="color:#ffffff; font-size:1.00em; margin-bottom: 20px;">Stocking dress-up & nuru massage</p>
+
+                    <h3 style="color: #ffffff; margin-bottom: 5px;">Overview</h3>
+                    <span class="hopping-news-small" style="color: #ffffff; margin-bottom: 20px; display: block;">With a focus premium, technique and aesthetics Stocking Massage provides unforgettable experiences not found at most other Bangkok massage parlors.</span>
+
+                    <div style="margin-top: 30px; border-top: 1px solid #333; margin-bottom: 30px;"></div>
+
+                    <div style="margin-bottom: 10px;">
+                        <a href="https://www.youtube.com/embed/_-9FAslUCH4?si=69hOTN9Hw4M6Q0t8" target="_blank">
+                            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTe3HOfVtccgNm3TcQIDw2Yt5W1SvBvmepYsYXdy8dMHQ&s=10" class="panel-media" alt="Blog Review Banner" />
+                        </a>
+                    </div>
+
+                    <h3 style="color:#ffffff; margin-top:10px; margin-bottom: 5px;">Browse Our Stocking Massage Content</h3>
+                    <p style="color:#ffffff; font-size:1.00em; margin-bottom: 20px;">Dive deeper into the Stocking Massage experience. Check out our latest video features, read exclusive blog reviews, and discover everything Stocking Massage has to offer.</p>
+
+                    <p class="hopping-news-small" style="color: #ffffff; margin-bottom: 20px;">
+                    <a href="https://www.youtube.com/embed/_-9FAslUCH4?si=69hOTN9Hw4M6Q0t8" target="_blank" rel="noopener">
+                    <img class="wp-image-49493 alignleft" src="https://www.gogohopping.com/wp-content/uploads/GGH-Thai-Nightlife-Blogs.png" alt="" width="44" height="55" />
+                    </a>
+                    Have a look at our FULL exclusive review of Stocking Massage... 
+                    <strong><a href="https://www.youtube.com/embed/_-9FAslUCH4?si=69hOTN9Hw4M6Q0t8" target="_blank" rel="noopener" style="color: #fffced;">Stocking Massage Review Blog</a></strong>
+                     </p>
+
+                    <h3 style="color:#ffffff; margin-top:30px; margin-bottom: 5px; border-top: 1px solid #333; padding-top: 30px;">Follow Stocking Massage</h3>
+                    
+                    <p style="color:#ffffff; font-size:1.00em; margin-bottom: 20px;">Find Stocking Massage on Social Media</p>
+
+                    <div class="social-icon-container" style="display: flex; gap: 10px; margin-bottom: 15px;">
+                        <a href="https://line.me/R/ti/p/@312fjkgi" target="_blank" rel="noopener"><img src="https://www.gogohopping.com/wp-content/uploads/new-KoKoRo-Massage-Line.png" width="30" height="30" /></a>
+                        <a href="https://stockingsbkk.com/" target="_blank" rel="noopener"><img src="https://www.gogohopping.com/wp-content/uploads/KoKoRo-Massage-Website.png" width="30" height="30" /></a>
+                        <a href="https://maps.app.goo.gl/JC3pVSM2MS6YqhMK9" target="_blank" rel="noopener"><img src="https://www.gogohopping.com/wp-content/uploads/KoKoRo-Massage-Location-Bangkok.png" width="30" height="30" /></a>
+                    </div>
+
+                    <div class="hopping-news-small" style="color: #ffffff; line-height: 1.6;">
+                        <strong>Line Official:</strong> @312fjkgi<br>            
+                        <strong>Website:</strong> <a href="www.stockingsbkk.com" style="color: #fffced;">www.stockingsbkk.com/</a><br>
+                        <strong>Address:</strong>Sukhumvit Soi 37, Khlong Tan Nuea, Watthana, Bangkok, 10110<br>
+                        <strong>Tel:</strong> (+66) 0972479800 | Open Daily: 11 AM – 2 AM
+                    </div>
+
+                    <div style="margin-top: 20px; border-top: 1px solid #333; padding-top: 15px;">
+                        <a href="https://maps.app.goo.gl/rWwSBP4QQXGL98w5A" target="_blank" style="color:#00ffff; font-weight:bold; text-decoration:none; font-size: 1.1em;">→ Open in Google Maps</a>
+                    </div>
+                `
+            },
+
+            { 
+            lat: 13.751465, 
+            lng: 100.575862,  
+            name: "Psyche Dream Spa", 
+            category: "💆💆‍♂️ Elite Relaxation & Wellness", 
+            icon: createBrandIcon('Psyche Dream'), 
+            isCustomPanel: true,
+            htmlContent: `
+                    <iframe 
+                        style="width: 100%; aspect-ratio: 16 / 9; border: none;"
+                        src="https://www.youtube.com/embed/KdUJGUXcW1Q?si=JF5JIAR1DYf1BzCR" 
+                        title="YouTube video player" 
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                        allowfullscreen>
+                    </iframe>
+                    <h3 style="color:#ffffff; margin-top:10px; margin-bottom: -10px;">Psyche Dream Spa</h3>
+                    <p style="color:#ffffff; font-size:1.00em; margin-bottom: 20px;">Cosplay, roleplay, BDSM and themed-room nuru massage</p>
+
+                    <h3 style="color: #ffffff; margin-bottom: 5px;">Overview</h3>
+                    <span class="hopping-news-small" style="color: #ffffff; margin-bottom: 20px; display: block;">With a focus on fun and cosplay fantasy sessions, Psyche Dream Spa delivers unforgettable experiences not found at most other Bangkok massage parlors. At Psyche Dream Spa, guests are able to live out their deepest life-long fantasies.</span>
+
+                    <div style="margin-top: 30px; border-top: 1px solid #333; margin-bottom: 30px;"></div>
+
+                    <div style="margin-bottom: 10px;">
+                        <a href="https://www.youtube.com/watch?v=KdUJGUXcW1Q" target="_blank">
+                            <img src="https://lh3.googleusercontent.com/gps-cs-s/AHRPTWkzD4a04RS2kHnY7ppBfEn5WxBs_DWdgDSsR35w6mn6OeNzkqdEiYRToKQ0Cns2LrrDQ7ZUu8MqXuDCM7Wpz_nAR6W0ExvtRVfcruCZPb_kK44aG8mlSIIvKCZXPz6c_azoSNXT=s680-w680-h510-rw" class="panel-media" alt="Blog Review Banner" />
+                        </a>
+                    </div>
+
+                    <h3 style="color:#ffffff; margin-top:10px; margin-bottom: 5px;">Browse Our Psyche Dream Spa Content</h3>
+                    <p style="color:#ffffff; font-size:1.00em; margin-bottom: 20px;">Dive deeper into the Psyche Dream Spa experience. Check out our latest video features, read exclusive blog reviews, and discover everything Psyche Dream Spa has to offer.</p>
+
+                    <p class="hopping-news-small" style="color: #ffffff; margin-bottom: 20px;">
+                    <a href="https://www.youtube.com/watch?v=KdUJGUXcW1Q" target="_blank" rel="noopener">
+                    <img class="wp-image-49493 alignleft" src="https://www.gogohopping.com/wp-content/uploads/GGH-Thai-Nightlife-Blogs.png" alt="" width="44" height="55" />
+                    </a>
+                    Have a look at our FULL exclusive review of Psyche Dream Spa... 
+                    <strong><a href="https://www.youtube.com/watch?v=KdUJGUXcW1Q" target="_blank" rel="noopener" style="color: #fffced;">Psyche Dream Spa Review Blog</a></strong>
+                     </p>
+
+                    <h3 style="color:#ffffff; margin-top:30px; margin-bottom: 5px; border-top: 1px solid #333; padding-top: 30px;">Follow Psyche Dream Spa</h3>
+                    
+                    <p style="color:#ffffff; font-size:1.00em; margin-bottom: 20px;">Find Psyche Dream Spa on Social Media</p>
+
+                    <div class="social-icon-container" style="display: flex; gap: 10px; margin-bottom: 15px;">
+                        <a href="https://lin.ee/tGEBWQv" target="_blank" rel="noopener"><img src="https://www.gogohopping.com/wp-content/uploads/new-KoKoRo-Massage-Line.png" width="30" height="30" /></a>
+                        <a href="https://u.wechat.com/kNMPU7SxIPT8JZtbm4J9Xek?s=2" target="_blank" rel="noopener"><img src="https://www.gogohopping.com/wp-content/uploads/Near-Nuru-Massage-WeChat-Contact.png" width="30" height="30" /></a>
+                        <a href="https://psychedreamspa.com/" target="_blank" rel="noopener"><img src="https://www.gogohopping.com/wp-content/uploads/KoKoRo-Massage-Website.png" width="30" height="30" /></a>
+                        <a href="https://maps.app.goo.gl/mtPeK1t1btk7PinP7" target="_blank" rel="noopener"><img src="https://www.gogohopping.com/wp-content/uploads/KoKoRo-Massage-Location-Bangkok.png" width="30" height="30" /></a>
+                    </div>
+
+                    <div class="hopping-news-small" style="color: #ffffff; line-height: 1.6;">
+                        <strong>Line Official:</strong> @psychedreamspa<br>            
+                        <strong>Website:</strong> <a href="https://psychedreamspa.com/" style="color: #fffced;">www.psychedreamspa.com/</a><br>
+                        <strong>Address:</strong>RCA Alley, Krung Thep Maha Nakhon, Huai Khwang, 10310<br>
+                        <strong>Tel:</strong> (+66) 0826144354 | Open Daily: 1 PM – 12 AM
+                    </div>
+
+                    <div style="margin-top: 20px; border-top: 1px solid #333; padding-top: 15px;">
+                        <a href="https://maps.app.goo.gl/mtPeK1t1btk7PinP7" target="_blank" style="color:#00ffff; font-weight:bold; text-decoration:none; font-size: 1.1em;">→ Open in Google Maps</a>
+                    </div>
+                `
+            },
+            
+             { 
+            lat: 13.737803, 
+            lng: 100.566708, 
+            name: "Near Nuru Massage", 
+            category: "💆💆‍♂️ Elite Relaxation & Wellness", 
+            icon: createBrandIcon('Near'), 
+            isCustomPanel: true,
+            htmlContent: `
+                    <iframe 
+                        style="width: 100%; aspect-ratio: 16 / 9; border: none;"
+                        src="https://rumble.com/embed/v7cnibk/" 
+                        title="YouTube video player" 
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                        allowfullscreen>
+                    </iframe>
+                    <h3 style="color:#ffffff; margin-top:10px; margin-bottom: -10px;">Near Nuru Massage</h3>
+                    <p style="color:#ffffff; font-size:1.00em; margin-bottom: 20px;">Premium Oil and Nuru Massage in Bangkok</p>
+
+                    <h3 style="color: #ffffff; margin-bottom: 5px;">Overview</h3>
+                    <span class="hopping-news-small" style="color: #ffffff; margin-bottom: 20px; display: block;">Japanese-inspired, premium oil and nuru massage in Bangkok. Every session is led by skilled, friendly therapists who are well-trained in authentic massage techniques.</span>
+
+                    <div style="margin-top: 30px; border-top: 1px solid #333; margin-bottom: 30px;"></div>
+
+                    <div style="margin-bottom: 10px;">
+                        <a href="https://www.gogohopping.com/public-area-review-blogs-bangkok-sukhumvit-soi-31-near-nuru-massage-review/" target="_blank">
+                            <img src="http://www.gogohopping.com/wp-content/uploads/Near-Nuru-Massage-FRONT.png" class="panel-media" alt="Blog Review Banner" />
+                        </a>
+                    </div>
+
+                    <h3 style="color:#ffffff; margin-top:10px; margin-bottom: 5px;">Browse Our Near Nuru Massage Content</h3>
+                    <p style="color:#ffffff; font-size:1.00em; margin-bottom: 20px;">Dive deeper into the Near Nuru Massage experience. Check out our latest video features, read exclusive blog reviews, and discover everything Near has to offer.</p>
+
+                    <p class="hopping-news-small" style="color: #ffffff; margin-bottom: 20px;">
+                    <a href="https://www.gogohopping.com/public-area-review-blogs-bangkok-sukhumvit-soi-31-near-nuru-massage-review/" target="_blank" rel="noopener">
+                    <img class="wp-image-49493 alignleft" src="https://www.gogohopping.com/wp-content/uploads/GGH-Thai-Nightlife-Blogs.png" alt="" width="44" height="55" />
+                    </a>
+                    Have a look at our FULL exclusive review of Near Nuru Massage... 
+                    <strong><a href="https://www.gogohopping.com/public-area-review-blogs-bangkok-sukhumvit-soi-31-near-nuru-massage-review/" target="_blank" rel="noopener" style="color: #fffced;">Near Nuru Massage Review Blog</a></strong>
+                     </p>
+
+                    <h3 style="color:#ffffff; margin-top:30px; margin-bottom: 5px; border-top: 1px solid #333; padding-top: 30px;">Follow Near Nuru Massage</h3>
+                    
+                    <p style="color:#ffffff; font-size:1.00em; margin-bottom: 20px;">Find Near Nuru Massage Social Media</p>
+
+                    <div class="social-icon-container" style="display: flex; gap: 10px; margin-bottom: 15px;">
+                        <a href="https://lin.ee/SBiOsjv" target="_blank" rel="noopener"><img src="https://www.gogohopping.com/wp-content/uploads/new-KoKoRo-Massage-Line.png" width="30" height="30" /></a>
+                        <a href="https://wa.me/qr/B4ZYUJLII4F7C1" target="_blank" rel="noopener"><img src="https://www.gogohopping.com/wp-content/uploads/KoKoRo-Massage-WhatsApp.png" width="30" height="30" /></a>
+                        <a href="https://u.wechat.com/kP6-QMIm8gcuUjmctdM0IYI?s=3" target="_blank" rel="noopener"><img src="https://www.gogohopping.com/wp-content/uploads/Near-Nuru-Massage-WeChat-Contact.png" width="30" height="30" /></a>
+                        <a href="https://www.nearmassagebkk.com" target="_blank" rel="noopener"><img src="https://www.gogohopping.com/wp-content/uploads/KoKoRo-Massage-Website.png" width="30" height="30" /></a>
+                        <a href="https://maps.app.goo.gl/eCYr2mn9GVABneKX9" target="_blank" rel="noopener"><img src="https://www.gogohopping.com/wp-content/uploads/KoKoRo-Massage-Location-Bangkok.png" width="30" height="30" /></a>
+                    </div>
+
+                    <div class="hopping-news-small" style="color: #ffffff; line-height: 1.6;">
+                        <strong>Line Official:</strong> @353gpznf<br>            
+                        <strong>Website:</strong> <a href="https://www.nearmassagebkk.com" style="color: #fffced;">www.nearnurumassage.com/</a><br>
+                        <strong>Address:</strong>Sukhumvit Soi 31, Khlong Toei Nuea, Watthana, Bangkok 10110<br>
+                        <strong>Tel:</strong> (+66) 0963857997 | Open Daily: 11 AM – 12 PM
+                    </div>
+
+                    <div style="margin-top: 20px; border-top: 1px solid #333; padding-top: 15px;">
+                        <a href="https://maps.app.goo.gl/5ybLpq2Vo8JKgKB68" target="_blank" style="color:#00ffff; font-weight:bold; text-decoration:none; font-size: 1.1em;">→ Open in Google Maps</a>
+                    </div>
+                `
+            },
+                 
+            { 
+            lat: 13.738161, 
+            lng: 100.566465, 
+            name: "Aries Nuru Bangkok", 
+            category: "💆💆‍♂️ Elite Relaxation & Wellness", 
+            icon: createBrandIcon('Aries'), 
+            isCustomPanel: true,
+            htmlContent: `
+                    <iframe 
+                        style="width: 100%; aspect-ratio: 16 / 9; border: none;"
+                        src="https://www.youtube.com/embed/LiY8BW4TznI?si=l2pRG2lZ7mPYAiT0" 
+                        title="YouTube video player" 
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                        allowfullscreen>
+                    </iframe>
+                    <h3 style="color:#ffffff; margin-top:10px; margin-bottom: 5px;">Aries Nuru Bangkok</h3>
+                    <p style="color:#ffffff; font-size:1.00em; margin-bottom: 20px;">Authentic Nuru & School Uniform Dress Up</p>
+
+                    <h3 style="color: #ffffff; margin-bottom: 5px;">Overview</h3>
+                    <span class="hopping-news-small" style="color: #ffffff; margin-bottom: 20px; display: block;">Aries Nuru Bangkok offers refined, authentic Nuru Massage experiences and school-uniform dess-up, with all ladies wearing school uniforms, and stockings for every session.</span>
+
+                    <div style="margin-top: 30px; border-top: 1px solid #333; margin-bottom: 30px;"></div>
+
+                    <div style="margin-bottom: 10px;">
+                        <a href="https://www.gogohopping.com/public-area-review-blogs-bangkok-sukhumvit-soi-31-aries-nuru-bangkok-review/" target="_blank">
+                            <img src="http://www.gogohopping.com/wp-content/uploads/Aries-Nuru-Massage-Bangkom-Nuru-FRONT-PAGE.png" class="panel-media" alt="Blog Review Banner" />
+                        </a>
+                    </div>
+
+                    <h3 style="color:#ffffff; margin-top:10px; margin-bottom: 5px;">Browse Our Aries Content</h3>
+                    <p style="color:#ffffff; font-size:1.00em; margin-bottom: 20px;">Dive deeper into the Aries Nuru Bangkok experience. Check out our latest video features, read exclusive blog reviews, and discover everything Aries has to offer.</p>
+
+                    <p class="hopping-news-small" style="color: #ffffff; margin-bottom: 20px;">
+                    <a href="https://www.gogohopping.com/public-area-review-blogs-bangkok-sukhumvit-soi-31-aries-nuru-bangkok-review/" target="_blank" rel="noopener">
+                    <img class="wp-image-49493 alignleft" src="https://www.gogohopping.com/wp-content/uploads/GGH-Thai-Nightlife-Blogs.png" alt="" width="44" height="55" />
+                    </a>
+                    Have a look at our FULL exclusive review of Aries Nuru Bangkok here... 
+                    <strong><a href="https://www.gogohopping.com/public-area-review-blogs-bangkok-sukhumvit-soi-31-aries-nuru-bangkok-review/" target="_blank" rel="noopener" style="color: #fffced;">Aries Nuru Bangkok Review Blog</a></strong>
+                     </p>
+
+                    <h3 style="color:#ffffff; margin-top:30px; margin-bottom: 5px; border-top: 1px solid #333; padding-top: 30px;">Follow Aries Nuru Bangkok</h3>
+                    
+                    <p style="color:#ffffff; font-size:1.00em; margin-bottom: 20px;">Find Aries Nuru Bangkok on Social Media</p>
+
+                    <div class="social-icon-container" style="display: flex; gap: 10px; margin-bottom: 15px;">
+                        <a href="https://line.me/R/ti/p/@672oslxw?oat_content=qr" target="_blank" rel="noopener"><img src="https://www.gogohopping.com/wp-content/uploads/new-KoKoRo-Massage-Line.png" width="30" height="30" /></a>
+                     </div>
+
+                    <div class="hopping-news-small" style="color: #ffffff; line-height: 1.6;">
+                        <strong>Line Official:</strong><br>            
+                        <strong>Official Website:</strong> <a href="https://maps.app.goo.gl/pwhd7a9Hbp6DntsZ6" style="color: #fffced;"></a><br>
+                        <strong>Address:</strong>Sukhumvit Soi 31, Khlong Toei Nuea, Watthana, Bangkok 10110<br>
+                        <strong>Tel:</strong> (+66) 0929707620 | Open Daily: 10 AM – 10 PM
+                    </div>
+
+                    <div style="margin-top: 20px; border-top: 1px solid #333; padding-top: 15px;">
+                        <a href="https://maps.app.goo.gl/EqWx96EuPRGE38qT8" target="_blank" style="color:#00ffff; font-weight:bold; text-decoration:none; font-size: 1.1em;">→ Open in Google Maps</a>
+                    </div>
+                `
+            },
+                
+            { 
+            lat: 13.732299, 
+            lng: 100.571071, 
+            name: "Bkk Vice Nuru Massage", 
+            category: "💆💆‍♂️ Elite Relaxation & Wellness", 
+            icon: createBrandIcon('BkkVice'), 
+            isCustomPanel: true,
+            htmlContent: `
+                    <iframe 
+                        style="width: 100%; aspect-ratio: 16 / 9; border: none;"
+                        src="https://www.youtube.com/embed/nNlmx2e6DqM?si=quAc6xbFxE3fN0iB" 
+                        title="YouTube video player" 
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                        allowfullscreen>
+                    </iframe>
+                    <h3 style="color:#ffffff; margin-top:10px; margin-bottom: 5px;">Bkk Vice Nuru Massage Bangkok</h3>
+                    <p style="color:#ffffff; font-size:1.00em; margin-bottom: 20px;">80s Miami Themed Nuru and Soapy Massage</p>
+
+                    <h3 style="color: #ffffff; margin-bottom: 5px;">Overview</h3>
+                    <span class="hopping-news-small" style="color: #ffffff; margin-bottom: 20px; display: block;">Styled on 80s Miami, and GTA Vice City, with themed reception area and rooms, BKK Vice Nuru Massage Bangkok delivers unforgettable experiences not found at most other massage parlors. At BKK Vice, guests are able to live out their neon-soaked retro fantasies.</span>
+
+                    <div style="margin-top: 30px; border-top: 1px solid #333; margin-bottom: 30px;"></div>
+
+                    <div style="margin-bottom: 10px;">
+                        <a href="https://www.gogohopping.com/public-area-review-blogs-bangkok-phrom-phong-bkk-vice-nuru-soapy-massage-parlor/" target="_blank">
+                            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRRSZxUBRnj5l1fW4mdbSID7rr-RDhr_RCqd8HT9FcTJQ&s=10" class="panel-media" alt="Blog Review Banner" />
+                        </a>
+                    </div>
+
+                    <h3 style="color:#ffffff; margin-top:10px; margin-bottom: 5px;">Browse Our Bkk Vice Content</h3>
+                    <p style="color:#ffffff; font-size:1.00em; margin-bottom: 20px;">Dive deeper into the BKK Vice experience. Check out our latest video features, read exclusive blog reviews, and discover everything BKK Vice has to offer.</p>
+
+                    <p class="hopping-news-small" style="color: #ffffff; margin-bottom: 20px;">
+                        <a href="https://www.gogohopping.com/public-area-review-blogs-bangkok-phrom-phong-bkk-vice-nuru-soapy-massage-parlor/">
+                            <img class="wp-image-49493 alignleft" src="https://www.gogohopping.com/wp-content/uploads/GGH-Thai-Nightlife-Blogs.png" alt="" width="44" height="55" />
+                        </a>
+                        Have a look at our FULL exclusive review of BKK Vice Massage here... 
+                        <strong><a href="https://www.gogohopping.com/public-area-review-blogs-bangkok-phrom-phong-bkk-vice-nuru-soapy-massage-parlor/" style="color: #fffced;">BKK Vice Nuru Massage Review Blog</a></strong>
+                    </p>
+
+                    <h3 style="color:#ffffff; margin-top:30px; margin-bottom: 5px; border-top: 1px solid #333; padding-top: 30px;">Follow BKKVice</h3>
+                    
+                    <p style="color:#ffffff; font-size:1.00em; margin-bottom: 20px;">Find BKK Vice Massage on Social Media</p>
+
+                    <div class="social-icon-container" style="display: flex; gap: 10px; margin-bottom: 15px;">
+                        <a href="https://line.me/R/ti/p/@bkkvice" target="_blank" rel="noopener"><img src="https://www.gogohopping.com/wp-content/uploads/new-KoKoRo-Massage-Line.png" width="30" height="30" /></a>
+                        <a href="https://bkkvice.com/" target="_blank" rel="noopener"><img src="https://www.gogohopping.com/wp-content/uploads/KoKoRo-Massage-Website.png" width="30" height="30" /></a>
+                        <a href="https://maps.app.goo.gl/pwhd7a9Hbp6DntsZ6" target="_blank" rel="noopener"><img src="https://www.gogohopping.com/wp-content/uploads/KoKoRo-Massage-Location-Bangkok.png" width="30" height="30" /></a>
+                    </div>
+
+                    <div class="hopping-news-small" style="color: #ffffff; line-height: 1.6;">
+                        <strong>Line Official:</strong><br>            
+                        <strong>Official Website:</strong> <a href="https://maps.app.goo.gl/pwhd7a9Hbp6DntsZ6" style="color: #fffced;">www.BKKVice.com</a><br>
+                        <strong>Address:</strong>Sukhumvit Soi 39, Khlong Toei Nuea, Watthana, Bangkok 10110<br>
+                        <strong>Tel:</strong> (+66)(0) 2 101 0152 | Open Daily: 11 AM – 12 AM
+                    </div>
+
+                    <div style="margin-top: 20px; border-top: 1px solid #333; padding-top: 15px;">
+                        <a href="https://maps.app.goo.gl/J86GUCyB1k8WefmCA" target="_blank" style="color:#00ffff; font-weight:bold; text-decoration:none; font-size: 1.1em;">→ Open in Google Maps</a>
+                    </div>
+                `
+            },
+            
+            { lat: 13.742949, lng: 100.552731, name: "Venus Nuru Massage", category: "💆💆‍♂️ Elite Relaxation & Wellness", icon: createBrandIcon('Venus'), text: "Premium Nuru massage services emphasizing specialized relaxation options and luxury wellness treatment paths.", google: "https://maps.app.goo.gl/upGU8YdV83pej8tY6" },
+            { lat: 13.736476, lng: 100.573350, name: "VAYA SPA & CAFE", category: "💆💆‍♂️ Elite Relaxation & Wellness", icon: createBrandIcon('Vaya'), text: "Premium Nuru massage services emphasizing specialized relaxation options and luxury wellness treatment paths.", google: "https://maps.app.goo.gl/xiVUyDP6HAbSmRo78" },
+            { lat: 13.732803, lng: 100.564893, name: "Anela Massage", category: "💆💆‍♂️ Elite Relaxation & Wellness", icon: createBrandIcon('Anela'), text: "Premium Nuru massage services emphasizing specialized relaxation options and luxury wellness treatment paths.", google: "https://maps.app.goo.gl/aD1chDKwY4zExyqe6" },
+            { lat: 13.730529, lng: 100.562749, name: "Aiyume Nuru Bangkok", category: "💆💆‍♂️ Elite Relaxation & Wellness", icon: createBrandIcon('Aiyume'), text: "Premium Nuru massage services emphasizing specialized relaxation options and luxury wellness treatment paths.", google: "https://maps.app.goo.gl/EGLzoratnXGALQVk7" },
+            { lat: 13.734139, lng: 100.567993, name: "Daisy Dream Nuru Massage Bangkok", category: "💆💆‍♂️ Elite Relaxation & Wellness", icon: createBrandIcon('DaisyDream'), text: "Premium Nuru massage services emphasizing specialized relaxation options and luxury wellness treatment paths.", google: "https://maps.app.goo.gl/XYyMVZy5cZRYZCC87" },
+            { lat: 13.729741, lng: 100.569738, name: "102 Massage Bangkok", category: "💆💆‍♂️ Elite Relaxation & Wellness", icon: createBrandIcon('102'), text: "Premium Nuru massage services emphasizing specialized relaxation options and luxury wellness treatment paths.", google: "https://maps.app.goo.gl/xsjEbXHP8Sm9ZDJv6" },
+            { lat: 13.723789, lng: 100.564744, name: "Roze Nuru Massage", category: "💆💆‍♂️ Elite Relaxation & Wellness", icon: createBrandIcon('⭐Roze'), text: "Premium Nuru massage services emphasizing specialized relaxation options and luxury wellness treatment paths.", google: "https://maps.app.goo.gl/kGsoFBChy2Uyfd3x5" },
+            { lat: 13.732566, lng: 100.565107, name: "Lomo Nuru Massage", category: "💆💆‍♂️ Elite Relaxation & Wellness", icon: createBrandIcon('Lomo'), text: "Premium Nuru massage services emphasizing specialized relaxation options and luxury wellness treatment paths.", google: "https://maps.app.goo.gl/hVcSjCg7kpJ25DVt6" },
+            { lat: 13.727967, lng: 100.570440, name: "Black Lotus Nuru Massage", category: "💆💆‍♂️ Elite Relaxation & Wellness", icon: createBrandIcon('BlackLotus'), text: "Premium Nuru massage services emphasizing specialized relaxation options and luxury wellness treatment paths.", google: "https://maps.app.goo.gl/FphSpzoq33j7NxzX7" },
+            { lat: 13.729846, lng: 100.565394, name: "A5 Massage", category: "💆💆‍♂️ Elite Relaxation & Wellness", icon: createBrandIcon('A5'), text: "Premium custom wellness venue located in the heart of the Sukhumvit entertainment hub.", google: "https://maps.app.goo.gl/W8qryNAt6eK4X95F7" },
+            { lat: 13.733043, lng: 100.568057, name: "Hakumi Nuru Massage", category: "💆💆‍♂️ Elite Relaxation & Wellness", icon: createBrandIcon('Hakumi'), text: "Specialized dynamic body care and premium thematic relaxation treatments.", google: "https://maps.app.goo.gl/AA9GPCTPJo8CfhcHA" },
+            { lat: 13.735301, lng: 100.567813, name: "Aurora 33", category: "💆💆‍♂️ Elite Relaxation & Wellness", icon: createBrandIcon('Aurora33'), text: "Specialized dynamic body care and premium thematic relaxation treatments.", google: "https://maps.app.goo.gl/Kwypakt8SbcopdeV6" },
+            { lat: 13.729494, lng: 100.569731, name: "Aurora Bangkok", category: "💆💆‍♂️ Elite Relaxation & Wellness", icon: createBrandIcon('AuroraBkk'), text: "Elite relaxation venue providing flagship therapeutic pathways and custom lounge facilities.", google: "https://maps.app.goo.gl/usK43Z53Jr7s771DA" },
+            { lat: 13.733775, lng: 100.563507, name: "Exotic Massage Bangkok", category: "💆💆‍♂️ Elite Relaxation & Wellness", icon: createBrandIcon('Exotic'), text: "Highly personalized relaxation and high-end sensory massage concepts.", google: "https://maps.app.goo.gl/oWnF5zPRaDxBwgNeA" },
+            { lat: 13.734508, lng: 100.567622, name: "Toro Massage", category: "💆💆‍♂️ Elite Relaxation & Wellness", icon: createBrandIcon('Toro'), text: "Luxury wellness options engineered around expert specialized treatment layouts.", google: "https://maps.app.goo.gl/3DN39iD9a69HwepN8" },
+            { lat: 13.730951, lng: 100.565097, name: "Cube Nuru Massage", category: "💆💆‍♂️ Elite Relaxation & Wellness", icon: createBrandIcon('Cube'), text: "Premium luxury wellness concept and therapeutic Nuru massage layout.", google: "https://maps.app.goo.gl/MDr6K5SkyuofgKmz7" },
+            { lat: 13.730642, lng: 100.562768, name: "Barbie 18 Nuru Massage", category: "💆💆‍♂️ Elite Relaxation & Wellness", icon: createBrandIcon('Barbie18'), text: "Premium sensory wellness space engineered around upscale personal relaxation care.", google: "https://maps.app.goo.gl/JosMpoUyA9LX4N6p7" },
+            { lat: 13.738537, lng: 100.557691, name: "Romance Nuru Massage", category: "💆💆‍♂️ Elite Relaxation & Wellness", icon: createBrandIcon('Romance'), text: "Exquisite lounge offering flagship therapeutic workflows and modern relaxation designs.", google: "https://maps.app.goo.gl/XwJGrkHstuYkdsLQ8" },
+            { lat: 13.733105, lng: 100.564653, name: "Lucy Nuru Massage", category: "💆💆‍♂️ Elite Relaxation & Wellness", icon: createBrandIcon('Lucy'), text: "Sophisticated themed relaxation sanctuary nestled within the Sukhumvit corridor.", google: "https://maps.app.goo.gl/VYUF7UPq9xE3xFAr5" },
+            { lat: 13.732726, lng: 100.564848, name: "Luxe Nuru Massage", category: "💆💆‍♂️ Elite Relaxation & Wellness", icon: createBrandIcon('Luxe'), text: "Sophisticated themed relaxation sanctuary nestled within the Sukhumvit corridor.", google: "https://maps.app.goo.gl/jtTsyZVn769q48D37" }
         ];
 
         window.showPanel = function(loc) {
@@ -611,10 +1391,14 @@ Highly recommented!</span>
         }
 
         locations.forEach(loc => {
-            L.marker([loc.lat, loc.lng], { icon: loc.icon })
+            // Keep a marker reference so category buttons can show/hide it.
+            loc.marker = L.marker([loc.lat, loc.lng], { icon: loc.icon })
                 .addTo(map)
                 .on('click', () => showPanel(loc));
         });
+
+        // Start with all businesses visible.
+        applyBusinessFilter('all');
     });
     </script>
 </body>
