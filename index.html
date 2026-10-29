@@ -162,6 +162,63 @@
             border: 1px solid #00ffff;
             box-shadow: 0 0 10px rgba(0, 255, 255, 0.2);
         }
+        /* Minimalist arrow tab sits just outside the panel's right edge. */
+        .map-filter-container {
+            overflow: visible;
+        }
+        .filter-toggle {
+            position: absolute;
+            top: 50%;
+            right: -21px;
+            transform: translateY(-50%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 21px;
+            height: 64px;
+            padding: 0;
+            background: rgba(15, 5, 35, 0.92);
+            border: 1px solid rgba(0, 255, 255, 0.55);
+            border-left: 0;
+            border-radius: 0 4px 4px 0;
+            color: #00ffff;
+            font-family: Arial, sans-serif;
+            font-size: 11px;
+            font-weight: normal;
+            line-height: 1;
+            cursor: pointer;
+            box-shadow: none;
+        }
+        .filter-toggle .toggle-label {
+            display: none;
+        }
+        .filter-toggle .toggle-triangle {
+            display: inline-block;
+            line-height: 1;
+        }
+        .map-filter-container.collapsed {
+            width: 0;
+            min-width: 0;
+            max-width: 0;
+            max-height: 0;
+            padding: 0;
+            gap: 0;
+            overflow: visible;
+            background: transparent;
+            border: 0;
+            box-shadow: none;
+        }
+        .map-filter-container.collapsed .filter-btn {
+            display: none;
+        }
+        .map-filter-container.collapsed .filter-toggle {
+            right: -21px;
+            height: 64px;
+            background: #0066ff;
+            border-color: #0066ff;
+            color: #ffffff;
+        }
+
         .filter-btn {
             background: rgba(20, 10, 25, 0.95);
             border: 1px solid #777;
@@ -191,6 +248,8 @@
             .map-nav-container .nav-btn { padding: 5px 7px; font-size: 10px; }
             .map-filter-container { left: 8px; top: 50%; transform: translateY(-50%); width: 174px; max-width: calc(100% - 20px); max-height: calc(100% - 24px); gap: 5px; padding: 6px; }
             .filter-btn { padding: 7px 6px; font-size: 10px; text-align: left; }
+            .filter-toggle { width: 19px; height: 60px; right: -19px; font-size: 10px; }
+            .map-filter-container.collapsed .filter-toggle { right: -19px; height: 60px; }
         }
 
         /* Structural fix for custom Leaflet markers to prevent clipping */
@@ -488,6 +547,9 @@ L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/dark_nolabels/{z}/{x}
         const filterControlDiv = document.createElement('div');
         filterControlDiv.className = 'map-filter-container';
         filterControlDiv.innerHTML = `
+            <button type="button" class="filter-toggle" aria-expanded="true" aria-label="Hide business category filters" title="Hide business category filters">
+                <span class="toggle-triangle" aria-hidden="true">◀</span>
+            </button>
             <button class="filter-btn active" data-filter="all">All Businesses</button>
             <button class="filter-btn" data-filter="massage">Massage &amp; Men's Esthe</button>
             <button class="filter-btn" data-filter="short-time-pink">Short-time Bars &amp; Pink Salons</button>
@@ -496,6 +558,14 @@ L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/dark_nolabels/{z}/{x}
             <button class="filter-btn" data-filter="beer-live-music">Beer &amp; Live Music Bars</button>
         `;
         mapContainer.appendChild(filterControlDiv);
+
+        const filterToggleButton = filterControlDiv.querySelector('.filter-toggle');
+        filterToggleButton.addEventListener('click', function() {
+            const isCollapsed = filterControlDiv.classList.toggle('collapsed');
+            filterToggleButton.setAttribute('aria-expanded', isCollapsed ? 'false' : 'true');
+            filterToggleButton.setAttribute('aria-label', isCollapsed ? 'Show business category filters' : 'Hide business category filters');
+            filterToggleButton.setAttribute('title', isCollapsed ? 'Show business category filters' : 'Hide business category filters');
+        });
 
         let activeBusinessFilter = 'all';
 
