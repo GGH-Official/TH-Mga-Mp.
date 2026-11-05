@@ -53,7 +53,7 @@
             top: 0;
             right: -100%;
             width: 380px;
-            max-width: 100%;
+            max-width: calc(100% - 42px);
             height: 100%;
             background: rgba(15, 5, 25, 0.95);
             box-shadow: -4px 0 15px rgba(255, 0, 119, 0.4);
@@ -67,16 +67,6 @@
 
         #side-panel.open {
             right: 0;
-        }
-
-        .close-btn {
-            position: absolute;
-            top: 15px;
-            right: 20px;
-            color: #ff0077;
-            font-size: 28px;
-            cursor: pointer;
-            font-weight: bold;
         }
 
         /* Custom Container for Map Controls at the top */
@@ -155,39 +145,12 @@
             width: 218px;
             max-width: min(218px, calc(100% - 24px));
             max-height: calc(100% - 92px);
-            overflow-y: auto;
+            overflow: visible; /* Arrow handle remains outside the box; inner menus scroll. */
             background: rgba(15, 5, 35, 0.92);
             padding: 8px;
             border-radius: 6px;
             border: 1px solid #00ffff;
             box-shadow: 0 0 10px rgba(0, 255, 255, 0.2);
-        }
-        /* Minimalist arrow tab sits just outside the panel's right edge. */
-        .map-filter-container {
-            overflow: visible;
-        }
-        .filter-toggle {
-            position: absolute;
-            top: 50%;
-            right: -21px;
-            transform: translateY(-50%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 21px;
-            height: 64px;
-            padding: 0;
-            background: rgba(15, 5, 35, 0.92);
-            border: 1px solid rgba(0, 255, 255, 0.55);
-            border-left: 0;
-            border-radius: 0 4px 4px 0;
-            color: #00ffff;
-            font-family: Arial, sans-serif;
-            font-size: 11px;
-            font-weight: normal;
-            line-height: 1;
-            cursor: pointer;
-            box-shadow: none;
         }
         .filter-toggle .toggle-label {
             display: none;
@@ -207,16 +170,6 @@
             background: transparent;
             border: 0;
             box-shadow: none;
-        }
-        .map-filter-container.collapsed .filter-btn {
-            display: none;
-        }
-        .map-filter-container.collapsed .filter-toggle {
-            right: -21px;
-            height: 64px;
-            background: #0066ff;
-            border-color: #0066ff;
-            color: #ffffff;
         }
 
         .filter-btn {
@@ -248,9 +201,23 @@
             .map-nav-container .nav-btn { padding: 5px 7px; font-size: 10px; }
             .map-filter-container { left: 8px; top: 50%; transform: translateY(-50%); width: 174px; max-width: calc(100% - 20px); max-height: calc(100% - 24px); gap: 5px; padding: 6px; }
             .filter-btn { padding: 7px 6px; font-size: 10px; text-align: left; }
-            .filter-toggle { width: 19px; height: 60px; right: -19px; font-size: 10px; }
-            .map-filter-container.collapsed .filter-toggle { right: -19px; height: 60px; }
         }
+
+        /* Category and services share one panel footprint; mobile uses the same overlay. */
+        .filter-menu { display:flex; flex-direction:column; gap:7px; min-width:0; max-height:calc(100dvh - 110px); overflow-y:auto; }
+        .filter-menu[hidden] { display:none !important; }
+        .services-heading { display:flex; align-items:center; gap:8px; color:#00ffff; font-size:12px; font-weight:bold; padding:5px 2px; }
+        .services-back { background:transparent; color:#00ffff; border:1px solid #00ffff; border-radius:4px; padding:5px 9px; cursor:pointer; font-size:16px; }
+        .services-btn { text-align:left; }
+        .services-coming-soon { color:#ddd; font-size:12px; padding:12px 6px; }
+        /* Services appear as simple clickable text, without any surrounding box. */
+        .business-services { color:#fff; line-height:1.65; margin:12px 0 22px; overflow-wrap:anywhere; }
+        .business-services strong { color:#fff; }
+        .business-service-link { appearance:none; background:none; border:0; padding:0; margin:0; color:#00ffff; font:inherit; text-decoration:underline; text-underline-offset:3px; cursor:pointer; }
+        .business-service-link:hover, .business-service-link:focus-visible { color:#fff; }
+        .business-service-link:focus-visible { outline:2px solid #00ffff; outline-offset:3px; }
+        .map-filter-container.collapsed .filter-menu { display:none !important; }
+        @media (max-width:600px) { .filter-menu { gap:5px; max-height:calc(100dvh - 42px); } .services-heading { font-size:11px; } }
 
         /* Structural fix for custom Leaflet markers to prevent clipping */
         .neon-pin, .brand-pin {
@@ -337,6 +304,69 @@
         .social-icon-container a img:hover {
             transform: scale(1.15);
         }
+
+        /* Enlarged, solid neon-blue category drawer handle. */
+        .filter-toggle,
+        .map-filter-container.collapsed .filter-toggle {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 42px;
+            height: 128px;
+            right: -42px;
+            padding: 0;
+            cursor: pointer;
+            line-height: 1;
+            background: #00ffff;
+            border: 1px solid #00ffff;
+            color: #0d0614;
+            font-size: 22px;
+            border-radius: 0 6px 6px 0;
+            font-weight: bold;
+            box-shadow: 0 0 12px rgba(0,255,255,.45);
+        }
+        .filter-toggle:hover,
+        .map-filter-container.collapsed .filter-toggle:hover { background: #64ffff; }
+        /* Pink information drawer handle: same size as the blue category handle. */
+        #info-panel-toggle {
+            position: fixed;
+            top: 50%;
+            right: min(380px, calc(100vw - 42px));
+            transform: translateY(-50%);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            width: 42px;
+            height: 128px;
+            padding: 0;
+            border: 1px solid #ff0077;
+            border-right: 0;
+            border-radius: 8px 0 0 8px;
+            background: #ff0077;
+            color: #fff;
+            font-size: 22px;
+            font-weight: bold;
+            line-height: 1;
+            cursor: pointer;
+            box-shadow: -3px 0 16px rgba(255,0,119,.5);
+            z-index: 2100;
+        }
+        #info-panel-toggle.open { display: flex; }
+        #info-panel-toggle:hover { background: #ff3399; }
+        @media (max-width: 600px) {
+            .filter-toggle,
+            .map-filter-container.collapsed .filter-toggle {
+                width: 38px; height: 120px; right: -38px; font-size: 20px;
+            }
+            #side-panel { max-width: calc(100% - 38px); }
+            #info-panel-toggle {
+                width: 38px; height: 120px; font-size: 20px;
+                right: min(380px, calc(100vw - 38px));
+            }
+        }
     </style>
 </head>
 <body>
@@ -345,8 +375,8 @@
     <div id="map"></div>
 
     <!-- Side Panel Drawer -->
+    <button type="button" id="info-panel-toggle" aria-label="Close business information" title="Close information panel">▶</button>
     <div id="side-panel">
-        <span class="close-btn">&times;</span>
         <div id="panel-content">
             <h2 style="color: #00ffff; margin-top: 0;">Select a location on the map</h2>
         </div>
@@ -546,20 +576,82 @@ L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/dark_nolabels/{z}/{x}
         // ==========================================================================
         const filterControlDiv = document.createElement('div');
         filterControlDiv.className = 'map-filter-container';
-        filterControlDiv.innerHTML = `
-            <button type="button" class="filter-toggle" aria-expanded="true" aria-label="Hide business category filters" title="Hide business category filters">
-                <span class="toggle-triangle" aria-hidden="true">◀</span>
-            </button>
-            <button class="filter-btn active" data-filter="all">All Businesses</button>
-            <button class="filter-btn" data-filter="massage">Massage &amp; Men's Esthe</button>
-            <button class="filter-btn" data-filter="short-time-pink">Short-time Bars &amp; Pink Salons</button>
-            <button class="filter-btn" data-filter="agogo">Agogos &amp; Bars</button>
-            <button class="filter-btn" data-filter="karaoke-gclubs">Karaoke &amp; Gent Clubs</button>
-            <button class="filter-btn" data-filter="craft-live-music">Craft Beer &amp; Live Music Bars</button>
-            <button class="filter-btn" data-filter="pub-sports">Pubs &amp; Sports Bars</button>
-            <button class="filter-btn" data-filter="restaurant">Restaurants</button>
-        `;
-        mapContainer.appendChild(filterControlDiv);
+                 const categoryOptions = [
+             ['all', 'All Businesses'],
+             ['massage', "Massage & Men's Esthe"],
+             ['short-time-pink', 'Short-time Bars & Pink Salons'],
+             ['agogo', 'Agogos & Bars'],
+             ['karaoke-gclubs', 'Karaoke & Gent Clubs'],
+             ['craft-live-music', 'Craft Beer & Live Music Bars'],
+             ['pub-sports', 'Pubs & Sports Bars'],
+             ['restaurant', 'Restaurants'],
+             ['other', 'Other Businesses']
+         ];
+         // Button labels: use the exact same spelling in each business servicesAvailable list.
+         const servicesByCategory = {
+             'massage': ['All Services', 'Nuru Massage', 'Soapy Massage', 'Aroma Massage', 'Thai Oil Massage', 'Cosplay Massage', 'BDSM Massage', 'Vietnamese Barber'],
+             'short-time-pink': ['All Services', 'Onsite short-time rooms', 'Offsite short-time rooms', 'private room', 'public room'],
+             'craft-live-music': ['All Services', 'Craft Beer', 'Draft Beer', 'Live Music', 'Live Sports', 'Food & Drinks', 'Mookata', 'Beer Garden', 'Pool Table']
+         };
+         filterControlDiv.innerHTML = `
+             <button type="button" class="filter-toggle" aria-expanded="true" aria-label="Hide business category filters" title="Hide business category filters"><span class="toggle-triangle" aria-hidden="true">◀</span></button>
+             <div id="business-category-box" class="filter-menu" aria-label="Business categories"></div>
+             <div id="services-box" class="filter-menu" aria-label="Services" hidden></div>
+         `;
+         const categoryBox = filterControlDiv.querySelector('#business-category-box');
+         const servicesBox = filterControlDiv.querySelector('#services-box');
+         categoryOptions.forEach(([key, label]) => {
+             const button = document.createElement('button');
+             button.type = 'button';
+             button.className = 'filter-btn';
+             button.dataset.filter = key;
+             button.textContent = label + (key === 'all' ? '' : '  ›');
+             button.addEventListener('click', () => {
+                 applyBusinessFilter(key, null);
+                 if (key !== 'all') openServicesBox(key, label);
+             });
+             categoryBox.appendChild(button);
+         });
+         function openServicesBox(category, label) {
+             servicesBox.replaceChildren();
+             const heading = document.createElement('div');
+             heading.className = 'services-heading';
+             const back = document.createElement('button');
+             back.className = 'services-back';
+             back.type = 'button';
+             back.textContent = '←';
+             back.setAttribute('aria-label', 'Back to business categories');
+             back.addEventListener('click', () => {
+                 servicesBox.hidden = true;
+                 categoryBox.hidden = false;
+             });
+             const title = document.createElement('span');
+             title.textContent = label + ' — Services';
+             heading.append(back, title);
+             servicesBox.appendChild(heading);
+             const options = servicesByCategory[category];
+             if (!options) {
+                 const message = document.createElement('div');
+                 message.className = 'services-coming-soon';
+                 message.textContent = 'Coming Soon';
+                 servicesBox.appendChild(message);
+             } else {
+                 options.forEach(service => {
+                     const button = document.createElement('button');
+                     button.type = 'button';
+                     button.className = 'filter-btn services-btn';
+                     button.textContent = service;
+                     button.classList.toggle('active', service === 'All Services');
+                     button.setAttribute('aria-pressed', service === 'All Services' ? 'true' : 'false');
+                     button.dataset.service = service;
+                     button.addEventListener('click', () => applyBusinessFilter(category, service));
+                     servicesBox.appendChild(button);
+                 });
+             }
+             categoryBox.hidden = true;
+             servicesBox.hidden = false;
+         }
+mapContainer.appendChild(filterControlDiv);
 
         const filterToggleButton = filterControlDiv.querySelector('.filter-toggle');
         filterToggleButton.addEventListener('click', function() {
@@ -570,35 +662,42 @@ L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/dark_nolabels/{z}/{x}
         });
 
         let activeBusinessFilter = 'all';
+        let activeServiceFilter = null;
 
+        /* ======================================================================
+           HOW TO EDIT EACH BUSINESS
+           - businessType: must exactly match a label in categoryOptions above.
+           - servicesAvailable: edit the quoted names inside that business's list.
+             Service names must exactly match servicesByCategory for that type.
+           - [] means no services have been entered yet. "All Services" is only
+             a filter button and should NOT be listed on individual businesses.
+           Both left-side filter menus read the business's own fields directly.
+           ====================================================================== */
         function getBusinessFilterCategory(loc) {
-            // An explicit filterCategory on a location always takes priority.
-            if (loc.filterCategory) {
-                const explicit = loc.filterCategory.toLowerCase();
-                if (explicit === 'karaoke' || explicit === 'gentlemens-clubs' || explicit === 'g-clubs') return 'karaoke-gclubs';
-                return explicit;
-            }
-            const categoryText = (loc.category || '').toLowerCase();
-            const businessText = ((loc.name || '') + ' ' + (loc.text || '')).toLowerCase();
-            const allText = categoryText + ' ' + businessText;
-
-            // Check specific venue types before broader categories to avoid false matches.
-            if (/short[ -]?time|pink salon|pink salons/.test(allText)) return 'short-time-pink';
-            if (/a[ -]?go[ -]?go|agogo|gogo bar|go-go bar/.test(allText)) return 'agogo';
-            if (/karaoke|gentlemen.?s club|gentleman.?s club|men.?s club|g[ -]?clubs?/.test(allText)) return 'karaoke-gclubs';
-            if (/beer|live music|brewery|taproom/.test(allText)) return 'beer-live-music';
-            if (/wellness|massage|men.?s esthe|esthe|spa/.test(allText)) return 'massage';
-            return 'other';
+            if (loc.isLandmark) return 'landmark';
+            const matched = categoryOptions.find(([, label]) => label === loc.businessType);
+            return matched ? matched[0] : 'other';
         }
 
-        function applyBusinessFilter(filter) {
+        function getBusinessTypeLabel(loc) {
+            return loc.businessType || 'Coming Soon';
+        }
+
+        function matchesBusinessFilter(loc, category, service) {
+            return (category === 'all' || getBusinessFilterCategory(loc) === category) &&
+                (!service || service === 'All Services' || (loc.servicesAvailable || []).includes(service));
+        }
+
+        function applyBusinessFilter(filter, service = null) {
             activeBusinessFilter = filter;
+            activeServiceFilter = service;
             const fadeDuration = 1000;
 
             locations.forEach(loc => {
+                if (loc.isLandmark) return; // District markers are separate from businesses.
                 const marker = loc.marker;
                 if (!marker) return;
-                const matches = filter === 'all' || getBusinessFilterCategory(loc) === filter;
+                const matches = matchesBusinessFilter(loc, filter, service);
 
                 // Cancel any pending removal if the user changes filters again quickly.
                 if (loc._filterFadeTimer) {
@@ -606,7 +705,6 @@ L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/dark_nolabels/{z}/{x}
                     loc._filterFadeTimer = null;
                 }
 
-                const icon = marker.getElement ? marker.getElement() : marker._icon;
                 if (matches) {
                     if (!map.hasLayer(marker)) {
                         // Add it hidden, then let the browser animate it to full opacity.
@@ -623,8 +721,7 @@ L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/dark_nolabels/{z}/{x}
                 } else if (map.hasLayer(marker)) {
                     marker.setOpacity(0);
                     loc._filterFadeTimer = setTimeout(() => {
-                        const stillMatches = activeBusinessFilter === 'all' ||
-                            getBusinessFilterCategory(loc) === activeBusinessFilter;
+                        const stillMatches = matchesBusinessFilter(loc, activeBusinessFilter, activeServiceFilter);
                         if (!stillMatches && map.hasLayer(marker)) {
                             map.removeLayer(marker);
                         }
@@ -634,19 +731,16 @@ L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/dark_nolabels/{z}/{x}
             });
 
             filterControlDiv.querySelectorAll('.filter-btn').forEach(button => {
-                const isActive = button.dataset.filter === filter;
+                const isActive = button.classList.contains('services-btn')
+                     ? button.dataset.service === (service || 'All Services') && filter !== 'all'
+                     : button.dataset.filter === filter;
                 button.classList.toggle('active', isActive);
                 button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
             });
         }
 
-        filterControlDiv.querySelectorAll('.filter-btn').forEach(button => {
-            button.addEventListener('click', function() {
-                applyBusinessFilter(this.dataset.filter);
-            });
-        });
-
-        // ==========================================================================
+       
+ // ==========================================================================
         // MAIN ROAD: RATCHADAPHISEK
         // ==========================================================================
         const ratchadaPath = [
@@ -988,6 +1082,8 @@ L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/dark_nolabels/{z}/{x}
             }).addTo(map);
         });
 
+
+
         // ==========================================================================
         // MARKER DEFINITIONS & LOCATIONS
         // ==========================================================================
@@ -1008,12 +1104,17 @@ L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/dark_nolabels/{z}/{x}
             });
         }
 
-        const locations = [
+        /* ======================================================================
+           BANGKOK BUSINESSES — add/edit Bangkok business information below
+           ====================================================================== */
+        const bangkokBusinesses = [
             {
                 lat: 13.747507, 
                 lng: 100.573025,
                 name: "Fortune tap Craft beer & Restaurant",
-                category: "Beer & Live Music",
+                businessType: "Craft Beer & Live Music Bars",
+                servicesAvailable: ["Craft Beer", "Draft Beer", "Live Music", "Live Sports", "Food & Drinks", "Mookata", "Beer Garden", "Pool Table"],
+                category: "Craft Beer & Live Music Bars",
                 icon: createBrandIcon('⭐ Fortune Tap'),          
                 isCustomPanel: true,
                 htmlContent: `
@@ -1067,22 +1168,12 @@ L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/dark_nolabels/{z}/{x}
              `
             },
             {
-                lat: 12.9368, lng: 100.8872,
-                name: "Aries",
-                category: "Massage & Men's Esthe",
-                filterCategory: "massage",
-                text: "Aries Massage Pattaya. Address: 395/13 Pattaya 3rd Road, Muang Pattaya, Bang Lamung, Chon Buri 20150.",
-                google: "https://www.google.com/maps/search/?api=1&query=Aries+Massage+Pattaya+395%2F13+Pattaya+3rd+Road",
-                icon: createBrandIcon('💆 Aries')
-            },
-            { lat: 13.7371, lng: 100.5621, name: "Soi Cowboy", category: "🔴 Red Light District", text: "Famous neon-lit street known for go-go bars and nightlife.", google: "https://www.google.com/maps/search/?api=1&query=13.7371,100.5621", icon: neonPin },
-            { lat: 13.7415, lng: 100.5533, name: "Nana Plaza", category: "🔴 Red Light District", text: "Three-story complex famous for bars and entertainment.", google: "https://www.google.com/maps/search/?api=1&query=13.7415,100.5533", icon: neonPin },
-            { lat: 13.7284, lng: 100.5280, name: "Patpong", category: "🔴 Red Light District", text: "Historic red-light area with night market.", google: "https://www.google.com/maps/search/?api=1&query=13.7284,100.5280", icon: neonPin },
-            {
                 lat: 13.739889,
                 lng: 100.565639,
                 name: "KoKoRo Massage Bangkok",
-                category: "💆💆‍♂️ Elite Relaxation & Wellness",
+                businessType: "Massage & Men's Esthe",
+                servicesAvailable: ["Nuru Massage", "Soapy Massage", "Cosplay Massage", "BDSM Massage"],
+                category: "Massage & Men's Esthe",
                 icon: createBrandIcon('⭐ KoKoRo'),          
                 isCustomPanel: true,
                 htmlContent: `
@@ -1149,8 +1240,11 @@ L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/dark_nolabels/{z}/{x}
             { 
             lat: 13.7306089, 
             lng: 100.570302,  
-            name: "Stocking Massage", 
-            category: "💆💆‍♂️ Elite Relaxation & Wellness", 
+            name: "Stocking Massage",
+                businessType: "Massage & Men's Esthe",
+                servicesAvailable: ["Nuru Massage", "Soapy Massage"], 
+            category: "Massage & Men's Esthe",
+
             icon: createBrandIcon('Stocking Massage'), 
             isCustomPanel: true,
             htmlContent: `
@@ -1212,8 +1306,11 @@ L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/dark_nolabels/{z}/{x}
             { 
             lat: 13.751465, 
             lng: 100.575862,  
-            name: "Psyche Dream Spa", 
-            category: "💆💆‍♂️ Elite Relaxation & Wellness", 
+            name: "Psyche Dream Spa",
+                businessType: "Massage & Men's Esthe",
+                servicesAvailable: [], 
+            category: "Massage & Men's Esthe",
+
             icon: createBrandIcon('Psyche Dream'), 
             isCustomPanel: true,
             htmlContent: `
@@ -1276,8 +1373,11 @@ L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/dark_nolabels/{z}/{x}
              { 
             lat: 13.737803, 
             lng: 100.566708, 
-            name: "Near Nuru Massage", 
-            category: "💆💆‍♂️ Elite Relaxation & Wellness", 
+            name: "Near Nuru Massage",
+            businessType: "Massage & Men's Esthe",
+            servicesAvailable: ["Nuru Massage", "Soapy Massage"],
+            category: "Massage & Men's Esthe",
+
             icon: createBrandIcon('Near'), 
             isCustomPanel: true,
             htmlContent: `
@@ -1341,8 +1441,11 @@ L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/dark_nolabels/{z}/{x}
             { 
             lat: 13.738161, 
             lng: 100.566465, 
-            name: "Aries Nuru Bangkok", 
-            category: "💆💆‍♂️ Elite Relaxation & Wellness", 
+            name: "Aries Nuru Bangkok",
+                businessType: "Massage & Men's Esthe",
+                servicesAvailable: ["Nuru Massage", "Soapy Massage"], 
+            category: "Massage & Men's Esthe",
+
             icon: createBrandIcon('Aries'), 
             isCustomPanel: true,
             htmlContent: `
@@ -1402,8 +1505,11 @@ L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/dark_nolabels/{z}/{x}
             { 
             lat: 13.732299, 
             lng: 100.571071, 
-            name: "Bkk Vice Nuru Massage", 
-            category: "💆💆‍♂️ Elite Relaxation & Wellness", 
+            name: "Bkk Vice Nuru Massage",
+                businessType: "Massage & Men's Esthe",
+                servicesAvailable: ["Nuru Massage", "Soapy Massage"], 
+            category: "Massage & Men's Esthe",
+
             icon: createBrandIcon('BkkVice'), 
             isCustomPanel: true,
             htmlContent: `
@@ -1462,51 +1568,307 @@ L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/dark_nolabels/{z}/{x}
                 `
             },
             
-            { lat: 13.742949, lng: 100.552731, name: "Venus Nuru Massage", category: "💆💆‍♂️ Elite Relaxation & Wellness", icon: createBrandIcon('Venus'), text: "Premium Nuru massage services emphasizing specialized relaxation options and luxury wellness treatment paths.", google: "https://maps.app.goo.gl/upGU8YdV83pej8tY6" },
-            { lat: 13.736476, lng: 100.573350, name: "VAYA SPA & CAFE", category: "💆💆‍♂️ Elite Relaxation & Wellness", icon: createBrandIcon('Vaya'), text: "Premium Nuru massage services emphasizing specialized relaxation options and luxury wellness treatment paths.", google: "https://maps.app.goo.gl/xiVUyDP6HAbSmRo78" },
-            { lat: 13.732803, lng: 100.564893, name: "Anela Massage", category: "💆💆‍♂️ Elite Relaxation & Wellness", icon: createBrandIcon('Anela'), text: "Premium Nuru massage services emphasizing specialized relaxation options and luxury wellness treatment paths.", google: "https://maps.app.goo.gl/aD1chDKwY4zExyqe6" },
-            { lat: 13.730529, lng: 100.562749, name: "Aiyume Nuru Bangkok", category: "💆💆‍♂️ Elite Relaxation & Wellness", icon: createBrandIcon('Aiyume'), text: "Premium Nuru massage services emphasizing specialized relaxation options and luxury wellness treatment paths.", google: "https://maps.app.goo.gl/EGLzoratnXGALQVk7" },
-            { lat: 13.734139, lng: 100.567993, name: "Daisy Dream Nuru Massage Bangkok", category: "💆💆‍♂️ Elite Relaxation & Wellness", icon: createBrandIcon('DaisyDream'), text: "Premium Nuru massage services emphasizing specialized relaxation options and luxury wellness treatment paths.", google: "https://maps.app.goo.gl/XYyMVZy5cZRYZCC87" },
-            { lat: 13.729741, lng: 100.569738, name: "102 Massage Bangkok", category: "💆💆‍♂️ Elite Relaxation & Wellness", icon: createBrandIcon('102'), text: "Premium Nuru massage services emphasizing specialized relaxation options and luxury wellness treatment paths.", google: "https://maps.app.goo.gl/xsjEbXHP8Sm9ZDJv6" },
-            { lat: 13.723789, lng: 100.564744, name: "Roze Nuru Massage", category: "💆💆‍♂️ Elite Relaxation & Wellness", icon: createBrandIcon('⭐Roze'), text: "Premium Nuru massage services emphasizing specialized relaxation options and luxury wellness treatment paths.", google: "https://maps.app.goo.gl/kGsoFBChy2Uyfd3x5" },
-            { lat: 13.732566, lng: 100.565107, name: "Lomo Nuru Massage", category: "💆💆‍♂️ Elite Relaxation & Wellness", icon: createBrandIcon('Lomo'), text: "Premium Nuru massage services emphasizing specialized relaxation options and luxury wellness treatment paths.", google: "https://maps.app.goo.gl/hVcSjCg7kpJ25DVt6" },
-            { lat: 13.727967, lng: 100.570440, name: "Black Lotus Nuru Massage", category: "💆💆‍♂️ Elite Relaxation & Wellness", icon: createBrandIcon('BlackLotus'), text: "Premium Nuru massage services emphasizing specialized relaxation options and luxury wellness treatment paths.", google: "https://maps.app.goo.gl/FphSpzoq33j7NxzX7" },
-            { lat: 13.729846, lng: 100.565394, name: "A5 Massage", category: "💆💆‍♂️ Elite Relaxation & Wellness", icon: createBrandIcon('A5'), text: "Premium custom wellness venue located in the heart of the Sukhumvit entertainment hub.", google: "https://maps.app.goo.gl/W8qryNAt6eK4X95F7" },
-            { lat: 13.733043, lng: 100.568057, name: "Hakumi Nuru Massage", category: "💆💆‍♂️ Elite Relaxation & Wellness", icon: createBrandIcon('Hakumi'), text: "Specialized dynamic body care and premium thematic relaxation treatments.", google: "https://maps.app.goo.gl/AA9GPCTPJo8CfhcHA" },
-            { lat: 13.735301, lng: 100.567813, name: "Aurora 33", category: "💆💆‍♂️ Elite Relaxation & Wellness", icon: createBrandIcon('Aurora33'), text: "Specialized dynamic body care and premium thematic relaxation treatments.", google: "https://maps.app.goo.gl/Kwypakt8SbcopdeV6" },
-            { lat: 13.729494, lng: 100.569731, name: "Aurora Bangkok", category: "💆💆‍♂️ Elite Relaxation & Wellness", icon: createBrandIcon('AuroraBkk'), text: "Elite relaxation venue providing flagship therapeutic pathways and custom lounge facilities.", google: "https://maps.app.goo.gl/usK43Z53Jr7s771DA" },
-            { lat: 13.733775, lng: 100.563507, name: "Exotic Massage Bangkok", category: "💆💆‍♂️ Elite Relaxation & Wellness", icon: createBrandIcon('Exotic'), text: "Highly personalized relaxation and high-end sensory massage concepts.", google: "https://maps.app.goo.gl/oWnF5zPRaDxBwgNeA" },
-            { lat: 13.734508, lng: 100.567622, name: "Toro Massage", category: "💆💆‍♂️ Elite Relaxation & Wellness", icon: createBrandIcon('Toro'), text: "Luxury wellness options engineered around expert specialized treatment layouts.", google: "https://maps.app.goo.gl/3DN39iD9a69HwepN8" },
-            { lat: 13.730951, lng: 100.565097, name: "Cube Nuru Massage", category: "💆💆‍♂️ Elite Relaxation & Wellness", icon: createBrandIcon('Cube'), text: "Premium luxury wellness concept and therapeutic Nuru massage layout.", google: "https://maps.app.goo.gl/MDr6K5SkyuofgKmz7" },
-            { lat: 13.730642, lng: 100.562768, name: "Barbie 18 Nuru Massage", category: "💆💆‍♂️ Elite Relaxation & Wellness", icon: createBrandIcon('Barbie18'), text: "Premium sensory wellness space engineered around upscale personal relaxation care.", google: "https://maps.app.goo.gl/JosMpoUyA9LX4N6p7" },
-            { lat: 13.738537, lng: 100.557691, name: "Romance Nuru Massage", category: "💆💆‍♂️ Elite Relaxation & Wellness", icon: createBrandIcon('Romance'), text: "Exquisite lounge offering flagship therapeutic workflows and modern relaxation designs.", google: "https://maps.app.goo.gl/XwJGrkHstuYkdsLQ8" },
-            { lat: 13.733105, lng: 100.564653, name: "Lucy Nuru Massage", category: "💆💆‍♂️ Elite Relaxation & Wellness", icon: createBrandIcon('Lucy'), text: "Sophisticated themed relaxation sanctuary nestled within the Sukhumvit corridor.", google: "https://maps.app.goo.gl/VYUF7UPq9xE3xFAr5" },
-            { lat: 13.732726, lng: 100.564848, name: "Luxe Nuru Massage", category: "💆💆‍♂️ Elite Relaxation & Wellness", icon: createBrandIcon('Luxe'), text: "Sophisticated themed relaxation sanctuary nestled within the Sukhumvit corridor.", google: "https://maps.app.goo.gl/jtTsyZVn769q48D37" }
+            {
+                lat: 13.742949,
+                lng: 100.552731,
+                name: "Venus Nuru Massage",
+                businessType: "Massage & Men's Esthe",
+                servicesAvailable: ["Nuru Massage", "Soapy Massage"],
+                category: "Massage & Men's Esthe",
+                icon: createBrandIcon('Venus'),
+                text: "Premium Nuru massage services emphasizing specialized relaxation options and luxury wellness treatment paths.",
+                google: "https://maps.app.goo.gl/upGU8YdV83pej8tY6" },
+            {
+                lat: 13.736476,
+                lng: 100.573350,
+                name: "VAYA SPA & CAFE",
+                businessType: "Massage & Men's Esthe",
+                servicesAvailable: ["Thai Oil Massage", "Aroma Massage"],
+                category: "Massage & Men's Esthe",
+                icon: createBrandIcon('Vaya'),
+                text: "Premium Nuru massage services emphasizing specialized relaxation options and luxury wellness treatment paths.",
+                google: "https://maps.app.goo.gl/xiVUyDP6HAbSmRo78" },
+            {
+                lat: 13.732803,
+                lng: 100.564893,
+                name: "Anela Massage",
+                businessType: "Massage & Men's Esthe",
+                servicesAvailable: ["Nuru Massage"],
+                category: "Massage & Men's Esthe",
+                icon: createBrandIcon('Anela'),
+                text: "Premium Nuru massage services emphasizing specialized relaxation options and luxury wellness treatment paths.",
+                google: "https://maps.app.goo.gl/aD1chDKwY4zExyqe6" },
+            {
+                lat: 13.730529,
+                lng: 100.562749,
+                name: "Aiyume Nuru Bangkok",
+                businessType: "Massage & Men's Esthe",
+                servicesAvailable: ["Nuru Massage", "Soapy Massage"],
+                category: "Massage & Men's Esthe",
+                icon: createBrandIcon('Aiyume'),
+                text: "Premium Nuru massage services emphasizing specialized relaxation options and luxury wellness treatment paths.",
+                google: "https://maps.app.goo.gl/EGLzoratnXGALQVk7" },
+            {
+                lat: 13.734139,
+                lng: 100.567993,
+                name: "Daisy Dream Nuru Massage Bangkok",
+                businessType: "Massage & Men's Esthe",
+                servicesAvailable: ["Nuru Massage", "Soapy Massage"],
+                category: "Massage & Men's Esthe",
+                icon: createBrandIcon('DaisyDream'),
+                text: "Premium Nuru massage services emphasizing specialized relaxation options and luxury wellness treatment paths.",
+                google: "https://maps.app.goo.gl/XYyMVZy5cZRYZCC87" },
+            {
+                lat: 13.729741,
+                lng: 100.569738,
+                name: "102 Massage Bangkok",
+                businessType: "Massage & Men's Esthe",
+                servicesAvailable: ["Nuru Massage", "Soapy Massage"],
+                category: "Massage & Men's Esthe",
+                icon: createBrandIcon('102'),
+                text: "Premium Nuru massage services emphasizing specialized relaxation options and luxury wellness treatment paths.",
+                google: "https://maps.app.goo.gl/xsjEbXHP8Sm9ZDJv6" },
+            {
+                lat: 13.723789,
+                lng: 100.564744,
+                name: "Roze Nuru Massage",
+                businessType: "Massage & Men's Esthe",
+                servicesAvailable: ["Nuru Massage", "Soapy Massage"],
+                category: "Massage & Men's Esthe",
+                icon: createBrandIcon('⭐Roze'),
+                text: "Premium Nuru massage services emphasizing specialized relaxation options and luxury wellness treatment paths.",
+                google: "https://maps.app.goo.gl/kGsoFBChy2Uyfd3x5" },
+            {
+                lat: 13.732566,
+                lng: 100.565107,
+                name: "Lomo Nuru Massage",
+                businessType: "Massage & Men's Esthe",
+                servicesAvailable: ["Nuru Massage", "Soapy Massage"],
+                category: "Massage & Men's Esthe",
+                icon: createBrandIcon('Lomo'),
+                text: "Premium Nuru massage services emphasizing specialized relaxation options and luxury wellness treatment paths.",
+                google: "https://maps.app.goo.gl/hVcSjCg7kpJ25DVt6" },
+            {
+                lat: 13.727967,
+                lng: 100.570440,
+                name: "Black Lotus Nuru Massage",
+                businessType: "Massage & Men's Esthe",
+                servicesAvailable: ["Nuru Massage", "Soapy Massage"],
+                category: "Massage & Men's Esthe",
+                icon: createBrandIcon('BlackLotus'),
+                text: "Premium Nuru massage services emphasizing specialized relaxation options and luxury wellness treatment paths.",
+                google: "https://maps.app.goo.gl/FphSpzoq33j7NxzX7" },
+            {
+                lat: 13.729846,
+                lng: 100.565394,
+                name: "A5 Massage",
+                businessType: "Massage & Men's Esthe",
+                servicesAvailable: ["Nuru Massage", "Soapy Massage"],
+                category: "Massage & Men's Esthe",
+                icon: createBrandIcon('A5'),
+                text: "Premium custom wellness venue located in the heart of the Sukhumvit entertainment hub.",
+                google: "https://maps.app.goo.gl/W8qryNAt6eK4X95F7" },
+            {
+                lat: 13.733043,
+                lng: 100.568057,
+                name: "Hakumi Nuru Massage",
+                businessType: "Massage & Men's Esthe",
+                servicesAvailable: ["Nuru Massage", "Soapy Massage"],
+                category: "Massage & Men's Esthe",
+                icon: createBrandIcon('Hakumi'),
+                text: "Specialized dynamic body care and premium thematic relaxation treatments.",
+                google: "https://maps.app.goo.gl/AA9GPCTPJo8CfhcHA" },
+            {
+                lat: 13.735301,
+                lng: 100.567813,
+                name: "Aurora 33",
+                businessType: "Massage & Men's Esthe",
+                servicesAvailable: ["Nuru Massage", "Soapy Massage"],
+                category: "Massage & Men's Esthe",
+                icon: createBrandIcon('Aurora33'),
+                text: "Specialized dynamic body care and premium thematic relaxation treatments.",
+                google: "https://maps.app.goo.gl/Kwypakt8SbcopdeV6" },
+            {
+                lat: 13.729494,
+                lng: 100.569731,
+                name: "Aurora Bangkok",
+                businessType: "Massage & Men's Esthe",
+                servicesAvailable: ["Nuru Massage", "Soapy Massage"],
+                category: "Massage & Men's Esthe",
+                icon: createBrandIcon('AuroraBkk'),
+                text: "Elite relaxation venue providing flagship therapeutic pathways and custom lounge facilities.",
+                google: "https://maps.app.goo.gl/usK43Z53Jr7s771DA" },
+            {
+                lat: 13.733775,
+                lng: 100.563507,
+                name: "Exotic Massage Bangkok",
+                businessType: "Massage & Men's Esthe",
+                servicesAvailable: ["Nuru Massage", "Soapy Massage"],
+                category: "Massage & Men's Esthe",
+                icon: createBrandIcon('Exotic'),
+                text: "Highly personalized relaxation and high-end sensory massage concepts.",
+                google: "https://maps.app.goo.gl/oWnF5zPRaDxBwgNeA" },
+            {
+                lat: 13.734508,
+                lng: 100.567622,
+                name: "Toro Massage",
+                businessType: "Massage & Men's Esthe",
+                servicesAvailable: ["Nuru Massage", "Soapy Massage"],
+                category: "Massage & Men's Esthe",
+                icon: createBrandIcon('Toro'),
+                text: "Luxury wellness options engineered around expert specialized treatment layouts.",
+                google: "https://maps.app.goo.gl/3DN39iD9a69HwepN8" },
+            {
+                lat: 13.730951,
+                lng: 100.565097,
+                name: "Cube Nuru Massage",
+                businessType: "Massage & Men's Esthe",
+                servicesAvailable: ["Nuru Massage", "Soapy Massage"],
+                category: "Massage & Men's Esthe",
+                icon: createBrandIcon('Cube'),
+                text: "Premium luxury wellness concept and therapeutic Nuru massage layout.",
+                google: "https://maps.app.goo.gl/MDr6K5SkyuofgKmz7" },
+            {
+                lat: 13.730642,
+                lng: 100.562768,
+                name: "Barbie 18 Nuru Massage",
+                businessType: "Massage & Men's Esthe",
+                servicesAvailable: ["Nuru Massage", "Soapy Massage"],
+                category: "Massage & Men's Esthe",
+                icon: createBrandIcon('Barbie18'),
+                text: "Premium sensory wellness space engineered around upscale personal relaxation care.",
+                google: "https://maps.app.goo.gl/JosMpoUyA9LX4N6p7" },
+            {
+                lat: 13.738537,
+                lng: 100.557691,
+                name: "Romance Nuru Massage",
+                businessType: "Massage & Men's Esthe",
+                servicesAvailable: ["Nuru Massage", "Soapy Massage"],
+                category: "Massage & Men's Esthe",
+                icon: createBrandIcon('Romance'),
+                text: "Exquisite lounge offering flagship therapeutic workflows and modern relaxation designs.",
+                google: "https://maps.app.goo.gl/XwJGrkHstuYkdsLQ8" },
+            {
+                lat: 13.733105,
+                lng: 100.564653,
+                name: "Lucy Nuru Massage",
+                businessType: "Massage & Men's Esthe",
+                servicesAvailable: ["Nuru Massage", "Soapy Massage"],
+                category: "Massage & Men's Esthe",
+                icon: createBrandIcon('Lucy'),
+                text: "Sophisticated themed relaxation sanctuary nestled within the Sukhumvit corridor.",
+                google: "https://maps.app.goo.gl/VYUF7UPq9xE3xFAr5" },
+            {
+                lat: 13.732726,
+                lng: 100.564848,
+                name: "Luxe Nuru Massage",
+                businessType: "Massage & Men's Esthe",
+                servicesAvailable: ["Nuru Massage", "Soapy Massage"],
+                category: "Massage & Men's Esthe",
+                icon: createBrandIcon('Luxe'),
+                text: "Sophisticated themed relaxation sanctuary nestled within the Sukhumvit corridor.",
+                google: "https://maps.app.goo.gl/jtTsyZVn769q48D37" }
+        ];
+
+        /* ======================================================================
+           PATTAYA BUSINESSES — add/edit Pattaya business information below
+           ====================================================================== */
+        const pattayaBusinesses = [
+            {
+                lat: 12.9368, lng: 100.8872,
+                name: "Aries",
+                businessType: "Massage & Men's Esthe",
+                servicesAvailable: ["Nuru Massage", "Soapy Massage"],
+                category: "Massage & Men's Esthe",
+
+                text: "Aries Massage Pattaya. Address: 395/13 Pattaya 3rd Road, Muang Pattaya, Bang Lamung, Chon Buri 20150.",
+                google: "https://www.google.com/maps/search/?api=1&query=Aries+Massage+Pattaya+395%2F13+Pattaya+3rd+Road",
+                icon: createBrandIcon('💆 Aries')
+            }
+        ];
+
+        /* ======================================================================
+           BANGKOK LANDMARK / DISTRICT MARKERS — NOT business listings
+           Nana Plaza, Soi Cowboy and Patpong are kept separate from businesses.
+           ====================================================================== */
+        const bangkokLandmarks = [
+            {
+                lat: 13.7371, lng: 100.5621, name: "Soi Cowboy", category: "🔴 Red Light District", text: "Famous neon-lit street known for go-go bars and nightlife.", google: "https://www.google.com/maps/search/?api=1&query=13.7371,100.5621", icon: neonPin, isLandmark: true },
+            {
+                lat: 13.7415, lng: 100.5533, name: "Nana Plaza", category: "🔴 Red Light District", text: "Three-story complex famous for bars and entertainment.", google: "https://www.google.com/maps/search/?api=1&query=13.7415,100.5533", icon: neonPin, isLandmark: true },
+            {
+                lat: 13.7284, lng: 100.5280, name: "Patpong", category: "🔴 Red Light District", text: "Historic red-light area with night market.", google: "https://www.google.com/maps/search/?api=1&query=13.7284,100.5280", icon: neonPin, isLandmark: true }
+        ];
+
+        // All locations are still added to the map, with their original coordinates.
+        const locations = [
+            ...bangkokBusinesses,
+            ...pattayaBusinesses,
+            ...bangkokLandmarks
         ];
 
         window.showPanel = function(loc) {
             const panelContent = document.getElementById('panel-content');
             if (!panelContent) return;
             
+            const safe = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+            // Service links use each business's servicesAvailable list as the single source of truth.
+            // No Business Type row and no blue outline/background box.
+            const serviceList = Array.isArray(loc.servicesAvailable) ? loc.servicesAvailable : [];
+            const details = loc.isLandmark ? '' :
+                `<div class="business-services"><strong>Services Available:</strong> ${serviceList.length
+                    ? serviceList.map(service => `<button type="button" class="business-service-link" data-service="${safe(service)}" aria-label="Filter map by ${safe(service)}">${safe(service)}</button>`).join(', ')
+                    : 'Coming Soon'}</div>`;
             if (loc.isCustomPanel) {
-                panelContent.innerHTML = loc.htmlContent;
+                // Insert AFTER the Overview text, rather than before its heading.
+                const content = document.createElement('div');
+                content.innerHTML = loc.htmlContent;
+                const overviewHeading = Array.from(content.querySelectorAll('h3')).find(h => h.textContent.trim() === 'Overview');
+                const overviewText = overviewHeading?.nextElementSibling;
+                if (overviewText && details) overviewText.insertAdjacentHTML('afterend', details);
+                else if (details) content.insertAdjacentHTML('beforeend', details);
+                panelContent.replaceChildren(...Array.from(content.childNodes));
             } else {
                 panelContent.innerHTML = `
-                    <h2 style="color:#e600ff; margin-top:0;">${loc.name}</h2>
-                    <p style="color:#00ffff; font-size:1.1em;">${loc.category}</p>
-                    <p>${loc.text}</p>
-                    <a href="${loc.google}" target="_blank" style="color:#00ffff; font-weight:bold; text-decoration:none;">→ Open in Google Maps</a>
+                    <h2 style="color:#e600ff; margin-top:0;">${safe(loc.name)}</h2>
+                    ${loc.isLandmark ? `<p style="color:#00ffff; font-size:1.1em;">${safe(loc.category || 'Landmark')}</p>` : ''}
+                    <p>${safe(loc.text || '')}</p>
+                    ${details}
+                    ${loc.google ? `<a href="${safe(loc.google)}" target="_blank" rel="noopener" style="color:#00ffff; font-weight:bold; text-decoration:none;">→ Open in Google Maps</a>` : ''}
                 `;
             }
+            // Click any service in the information panel to filter map markers.
+            // Also synchronize the left category/services filter with that selection.
+            panelContent.querySelectorAll('.business-service-link').forEach(button => {
+                button.addEventListener('click', () => {
+                    const category = getBusinessFilterCategory(loc);
+                    const service = button.dataset.service;
+                    applyBusinessFilter(category, service);
+                    const label = categoryOptions.find(([key]) => key === category)?.[1];
+                    if (label) {
+                        openServicesBox(category, label);
+                        servicesBox.querySelectorAll('.services-btn').forEach(serviceButton => {
+                            const selected = serviceButton.dataset.service === service;
+                            serviceButton.classList.toggle('active', selected);
+                            serviceButton.setAttribute('aria-pressed', selected ? 'true' : 'false');
+                        });
+                    }
+                    // Reveal the newly filtered map instead of leaving it hidden by the info drawer.
+                    document.getElementById('side-panel')?.classList.remove('open');
+                    document.getElementById('info-panel-toggle')?.classList.remove('open');
+                });
+            });
             const panel = document.getElementById('side-panel');
             if (panel) panel.classList.add('open');
+            document.getElementById('info-panel-toggle')?.classList.add('open');
         };
 
-        const closeBtn = document.querySelector('.close-btn');
+        const closeBtn = document.getElementById('info-panel-toggle');
         if (closeBtn) {
             closeBtn.addEventListener('click', function() {
                 const panel = document.getElementById('side-panel');
                 if (panel) panel.classList.remove('open');
+                this.classList.remove('open');
             });
         }
 
