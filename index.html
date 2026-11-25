@@ -879,6 +879,35 @@ mapContainer.appendChild(filterControlDiv);
             }
         });
 
+        // ==========================================================================
+        // MINOR ROAD: Lucy Sukhumvit Soi 22
+        // ==========================================================================
+        const SukhumvitSoi22LucyPath = [
+            [13.733033, 100.565139], // Left number less is longer South and right number less is longer West // 
+            [13.733121, 100.564640],
+        ];
+
+        const SukhumvitSoi22Lucy = L.polyline(SukhumvitSoi22Lucy, {
+            color: '#aaaaaa',
+            weight: 4,
+            opacity: 0.75,
+            lineCap: 'round',
+            lineJoin: 'round',
+            interactive: false
+        }).addTo(map);
+
+        SukhumvitSoi22Lucy.setText("Sukhumvit Soi 22 Lucy", {
+            center: true,
+            offset: -6,
+            attributes: {
+                'fill': '#ffffff',
+                'font-weight': '500',
+                'font-size': '10px',
+                'font-family': 'Helvetica Neue, Arial, sans-serif',
+                'letter-spacing': '0.5px'
+            }
+        });
+
          // ==========================================================================
         // MINOR ROAD: Sukhumvit Soi 37
         // ==========================================================================
